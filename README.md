@@ -45,13 +45,14 @@ https://kittynxr.github.io/imscaler/index.json
 - 🔧 Automatic floor placement
 
 ![Measurement Gizmos](screenshots/gizmos-visualization.png)
+
 *Visual measurement gizmos help you understand the scaling calculations*
 
 ## 📋 Requirements
 
 - Unity 2019.4 or newer (VRChat's supported version)
 - VRChat SDK3 Avatars
-- NDMF (installed automatically via VCC)
+- [NDMF (Non-Destructive Modular Framework)](https://github.com/bdunderscore/ndmf) - installed automatically if using VCC
 - Avatar with Humanoid rig configuration
 
 ## 🛠️ Usage
@@ -64,6 +65,7 @@ https://kittynxr.github.io/imscaler/index.json
 5. Upload your avatar - scaling is applied automatically!
 
 ![Component UI](screenshots/component-ui.png)
+
 *The Immersive Scaler component interface*
 
 ### Two Ways to Use
@@ -79,9 +81,11 @@ https://kittynxr.github.io/imscaler/index.json
 - Useful for testing and debugging
 
 ![Tools Window](screenshots/tools-window-ndmf.png)
+
 *The Tools window showing NDMF component option*
 
 ![Component Exists Alert](screenshots/component-exists-alert.png)
+
 *Alert shown when component already exists on avatar*
 
 [📖 Full Documentation](VRChatImmersiveScaler/README.md)
