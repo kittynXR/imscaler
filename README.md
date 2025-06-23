@@ -10,7 +10,9 @@ A Unity tool for properly scaling VRChat avatars to match real-world proportions
 
 Add to VCC with one click:
 
-[Add to VCC](vcc://vpm/addRepo?url=https://kittynxr.github.io/imscaler/index.json)
+<a href="vcc://vpm/addRepo?url=https://kittynxr.github.io/imscaler/index.json">
+  <img src="https://img.shields.io/badge/Add%20to-VCC-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyQzIgMTcuNTIgNi40OCAyMiAxMiAyMkMxNy41MiAyMiAyMiAxNy41MiAyMiAxMkMyMiA2LjQ4IDE3LjUyIDIgMTIgMlpNMTYgMTNIMTNWMTZDMTMgMTYuNTUgMTIuNTUgMTcgMTIgMTdDMTEuNDUgMTcgMTEgMTYuNTUgMTEgMTZWMTNIOEM3LjQ1IDEzIDcgMTIuNTUgNyAxMkM3IDExLjQ1IDcuNDUgMTEgOCAxMUgxMVY4QzExIDcuNDUgMTEuNDUgNyAxMiA3QzEyLjU1IDcgMTMgNy40NSAxMyA4VjExSDE2QzE2LjU1IDExIDE3IDExLjQ1IDE3IDEyQzE3IDEyLjU1IDE2LjU1IDEzIDE2IDEzWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="Add to VCC">
+</a>
 
 Or manually add this URL to VCC:
 ```
