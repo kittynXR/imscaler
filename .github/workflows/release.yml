@@ -13,12 +13,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
   build-listing:
@@ -71,17 +65,31 @@ jobs:
           console.log('Generated index.json');
           "
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v3
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Create a temporary directory for gh-pages
+          mkdir gh-pages-deploy
+          cp index.json gh-pages-deploy/
+          
+          # Check if gh-pages branch exists
+          if git ls-remote --heads origin gh-pages | grep gh-pages; then
+            git fetch origin gh-pages
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+          fi
+          
+          # Copy the new index.json
+          cp gh-pages-deploy/index.json .
+          
+          # Commit and push
+          git add index.json
+          git commit -m "Update VCC listing" || echo "No changes to commit"
+          git push origin gh-pages
 
   build-package:
     runs-on: ubuntu-latest
