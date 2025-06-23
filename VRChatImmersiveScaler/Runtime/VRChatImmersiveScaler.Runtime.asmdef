@@ -1,0 +1,22 @@
+{
+    "name": "VRChatImmersiveScaler.Runtime",
+    "rootNamespace": "VRChatImmersiveScaler",
+    "references": [
+        "VRC.SDKBase"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.vrchat.base",
+            "expression": "",
+            "define": "VRC_SDK_VRCSDK3"
+        }
+    ],
+    "noEngineReferences": false
+}
