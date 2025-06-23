@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install VRChat Immersive Scaler - VCC</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #8b949e;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .status {
+            background-color: #1f2937;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #2ea043;
+        }
+        .secondary-button {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+        }
+        .secondary-button:hover {
+            background-color: #30363d;
+        }
+        .url-box {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            user-select: all;
+            cursor: text;
+        }
+        .divider {
+            margin: 30px 0;
+            border-top: 1px solid #30363d;
+        }
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VRChat Immersive Scaler</h1>
+        <p class="subtitle">Unity tool for scaling VRChat avatars to real-world proportions</p>
+        
+        <div class="status">
+            <div class="status-icon loading">⏳</div>
+            <p id="status-text">Opening VRChat Creator Companion...</p>
+        </div>
+        
+        <button onclick="installPackage()" class="button">
+            Click here if VCC doesn't open
+        </button>
+        
+        <div class="divider"></div>
+        
+        <p style="color: #8b949e; margin-bottom: 10px;">Or add manually in VCC:</p>
+        <div class="url-box" onclick="selectText(this)">
+            https://kittynxr.github.io/imscaler/index.json
+        </div>
+        
+        <a href="https://github.com/kittynXR/imscaler" class="button secondary-button">
+            View on GitHub
+        </a>
+    </div>
+    
+    <script>
+        function installPackage() {
+            window.location.href = 'vcc://vpm/addRepo?url=https://kittynxr.github.io/imscaler/index.json';
+        }
+        
+        function selectText(element) {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        
+        // Auto-redirect after a short delay
+        setTimeout(function() {
+            installPackage();
+            
+            // Update status after redirect attempt
+            setTimeout(function() {
+                document.getElementById('status-text').textContent = 'If VCC didn\'t open, click the button below';
+                document.querySelector('.status-icon').textContent = '❓';
+                document.querySelector('.status-icon').classList.remove('loading');
+            }, 1000);
+        }, 1500);
+    </script>
+</body>
+</html>
