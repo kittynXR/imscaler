@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -72,45 +72,49 @@ jobs:
           "
 
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v3
 
   build-package:
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create Unity Package
+        id: create_package
         run: |
           # Create package directory structure
           mkdir -p package
           cp -r VRChatImmersiveScaler/* package/
           
-          # Read version from package.json
-          VERSION=$(cat VRChatImmersiveScaler/package.json | grep '"version"' | cut -d '"' -f 4)
-          PACKAGE_NAME=$(cat VRChatImmersiveScaler/package.json | grep '"name"' | cut -d '"' -f 4)
+          # Read version and name from package.json
+          VERSION=$(cat VRChatImmersiveScaler/package.json | grep '"version"' | head -1 | cut -d '"' -f 4)
+          PACKAGE_NAME=$(cat VRChatImmersiveScaler/package.json | grep '"name"' | head -1 | cut -d '"' -f 4)
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "FILENAME=${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
           
           # Create zip file
           cd package
           zip -r "../${PACKAGE_NAME}-${VERSION}.zip" .
           cd ..
+          
+          echo "Created package: ${PACKAGE_NAME}-${VERSION}.zip"
 
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.create_package.outputs.FILENAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ env.PACKAGE_NAME }}-${{ env.VERSION }}.zip
-          asset_name: ${{ env.PACKAGE_NAME }}-${{ env.VERSION }}.zip
-          asset_content_type: application/zip
