@@ -27,5 +27,6 @@
   "vpmDependencies": {
     "nadena.dev.ndmf": "^1.0.0",
     "com.vrchat.avatars": "^3.0.0"
-  }
+  },
+  "license": "MIT"
 }
