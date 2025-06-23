@@ -715,7 +715,9 @@ namespace VRChatImmersiveScaler
             
             // Get current values
             parameters.targetHeight = scalerCore.GetHeightByMethod(targetHeightMethod);
-            parameters.upperBodyPercentage = scalerCore.GetUpperBodyRatio(upperBodyUseNeck, upperBodyTorsoUseNeck) * 100f;
+            parameters.upperBodyPercentage = upperBodyUseLegacy ? 
+                scalerCore.GetUpperBodyPortion() * 100f :
+                scalerCore.GetUpperBodyRatio(upperBodyUseNeck, upperBodyTorsoUseNeck) * 100f;
             
             // Calculate arm ratio
             float armValue = scalerCore.GetArmByMethod(armToHeightRatioMethod);
@@ -828,6 +830,7 @@ namespace VRChatImmersiveScaler
             parameters.armToHeightHeightMethod = armToHeightHeightMethod;
             parameters.upperBodyUseNeck = upperBodyUseNeck;
             parameters.upperBodyTorsoUseNeck = upperBodyTorsoUseNeck;
+            parameters.upperBodyUseLegacy = upperBodyUseLegacy;
             
             scalerCore.ScaleAvatar(parameters);
             

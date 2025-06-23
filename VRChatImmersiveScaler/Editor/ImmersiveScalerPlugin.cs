@@ -65,7 +65,14 @@ namespace VRChatImmersiveScaler.Editor
                         skipAdjust = component.skipMainRescale,
                         skipFloor = component.skipMoveToFloor,
                         skipScale = component.skipHeightScaling,
-                        useBoneBasedFloorCalculation = component.useBoneBasedFloorCalculation
+                        useBoneBasedFloorCalculation = component.useBoneBasedFloorCalculation,
+                        // Pass measurement method configuration
+                        targetHeightMethod = component.targetHeightMethod,
+                        armToHeightRatioMethod = component.armToHeightRatioMethod,
+                        armToHeightHeightMethod = component.armToHeightHeightMethod,
+                        upperBodyUseNeck = component.upperBodyUseNeck,
+                        upperBodyTorsoUseNeck = component.upperBodyTorsoUseNeck,
+                        upperBodyUseLegacy = component.upperBodyUseLegacy
                     };
                     
                     // Apply scaling
