@@ -87,9 +87,14 @@ jobs:
           # Copy the new files
           cp gh-pages-deploy/index.json .
           cp gh-pages-deploy/.nojekyll .
+          # Preserve install.html if it exists
+          [ -f install.html ] && cp install.html gh-pages-deploy/
+          
+          # Restore install.html if it was preserved
+          [ -f gh-pages-deploy/install.html ] && cp gh-pages-deploy/install.html .
           
           # Commit and push
-          git add index.json .nojekyll
+          git add index.json .nojekyll install.html
           git commit -m "Update VCC listing" || echo "No changes to commit"
           git push origin gh-pages
 
