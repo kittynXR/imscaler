@@ -23,7 +23,7 @@ https://kittynxr.github.io/imscaler/index.json
 
 ### Core Scaling Features
 - ✅ **Automated Avatar Scaling** - One-click scaling to match your real height
-- ✅ **VRChat IK Support** - Compatible with both legacy and IK 2.0 systems
+- ✅ **VRChat IK Compatibility** - Maintains proper VRChat IK measurements
 - ✅ **Automatic ViewPosition** - Maintains correct eye position after scaling
 - ✅ **Non-Destructive** - Unity version uses NDMF for build-time processing
 
@@ -112,8 +112,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/kittynXR/imscaler/issues)
-- **Discord**: [Join our Discord](https://discord.gg/yourdiscord)
-- **Documentation**: [Wiki](https://github.com/kittynXR/imscaler/wiki)
+- **Discord**: Coming soon
+- **Documentation**: [Full Documentation](VRChatImmersiveScaler/README.md)
 
 ---
 

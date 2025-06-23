@@ -5,7 +5,7 @@ An NDMF-based Unity tool that provides the same powerful avatar scaling capabili
 ## Features
 
 - **Automated Avatar Scaling**: One-click scaling to match your real height and proportions
-- **VRChat IK Compatibility**: Maintains proper VRChat IK measurements and arm ratios
+- **VRChat IK 2.0 Support**: Compatible with both legacy and IK 2.0 scaling systems
 - **Customizable Proportions**:
   - Upper body vs lower body ratio
   - Arm and leg thickness
@@ -49,7 +49,7 @@ An NDMF-based Unity tool that provides the same powerful avatar scaling capabili
 ### Preview Mode
 
 - Click "Preview Scaling" to see changes in editor
-- Click "Cancel Preview" to undo preview changes
+- Click "Reset Preview" to undo preview
 - Actual scaling happens during avatar build
 
 ### Parameters
@@ -129,11 +129,12 @@ The scaling preserves VRChat's head-to-hand distance measurement while adjusting
 
 For issues, feature requests, or questions:
 - Create an issue on the GitHub repository
+- Contact on Discord: pager#0001
 
 ## Credits
 
-VRChat Immersive Scaler Unity Tool
-Developed to help VRChat users achieve proper real-world avatar proportions
+Based on the original Immersive Scaler Blender addon by pager
+Unity port developed to provide the same functionality within the Unity workflow
 
 ## License
 
