@@ -73,6 +73,7 @@ jobs:
           # Create a temporary directory for gh-pages
           mkdir gh-pages-deploy
           cp index.json gh-pages-deploy/
+          touch gh-pages-deploy/.nojekyll
           
           # Check if gh-pages branch exists
           if git ls-remote --heads origin gh-pages | grep gh-pages; then
@@ -83,11 +84,12 @@ jobs:
             git rm -rf .
           fi
           
-          # Copy the new index.json
+          # Copy the new files
           cp gh-pages-deploy/index.json .
+          cp gh-pages-deploy/.nojekyll .
           
           # Commit and push
-          git add index.json
+          git add index.json .nojekyll
           git commit -m "Update VCC listing" || echo "No changes to commit"
           git push origin gh-pages
 
