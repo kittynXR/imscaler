@@ -135,6 +135,8 @@ For issues, feature requests, or questions:
 VRChat Immersive Scaler Unity Tool
 Developed to help VRChat users achieve proper real-world avatar proportions
 
+Inspired by the [Immersive Scaler Blender addon](https://github.com/Pager07/immersive_scaler) - scaling algorithms reimplemented for Unity
+
 ## License
 
 MIT License - See LICENSE file for details

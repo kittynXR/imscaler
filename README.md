@@ -105,6 +105,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
+- Inspired by the [Immersive Scaler Blender addon](https://github.com/Pager07/immersive_scaler) - mathematical concepts reimplemented for Unity
 - NDMF framework by bd_ for non-destructive Unity modifications
 - VRChat community for testing and feedback
 - All contributors to the Immersive Scaler project
