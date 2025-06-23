@@ -75,6 +75,9 @@ jobs:
           cp index.json gh-pages-deploy/
           touch gh-pages-deploy/.nojekyll
           
+          # Remove any existing index.json to avoid conflicts
+          rm -f index.json
+          
           # Check if gh-pages branch exists
           if git ls-remote --heads origin gh-pages | grep gh-pages; then
             git fetch origin gh-pages
