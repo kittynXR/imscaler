@@ -2,11 +2,7 @@
   "name": "Immersive Scaler VRChat Tools",
   "id": "com.immersivescaler.listing",
   "url": "https://imscaler.kittyn.cat/index.json",
-  "author": {
-    "name": "Immersive Scaler Contributors",
-    "email": "",
-    "url": "https://github.com/kittynXR/imscaler"
-  },
+  "author": "kittyn cat",
   "description": "VRChat avatar scaling tools for proper real-world proportions and VR immersion",
   "infoLink": {
     "url": "https://github.com/kittynXR/imscaler",
