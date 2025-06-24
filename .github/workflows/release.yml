@@ -39,24 +39,28 @@ jobs:
           // Read package.json
           const packageJson = JSON.parse(fs.readFileSync('VRChatImmersiveScaler/package.json', 'utf8'));
           
-          // Create the listing structure - minimal format for VCC compatibility
+          // Create the listing structure - EXACT format that works
           const listing = {
-            name: source.name,
-            author: source.author,
-            url: source.url,
-            id: source.id,
+            name: "Immersive Scaler VRChat Tools",
+            author: "kittyn cat",
+            url: "https://immersive_scaler.kittyn.cat/index.json",
+            id: "cat.kittyn.vpm",
             packages: {
-              [packageJson.name]: {
+              "cat.kittyn.immersive_scaler": {
                 versions: {
                   [packageJson.version]: {
-                    name: packageJson.name,
-                    displayName: packageJson.displayName,
+                    name: "cat.kittyn.immersive_scaler",
+                    displayName: "VRChat Immersive Scaler",
                     version: packageJson.version,
-                    unity: packageJson.unity,
-                    description: packageJson.description,
-                    author: packageJson.author,
-                    url: \`https://github.com/\${process.env.GITHUB_REPOSITORY}/releases/download/v\${packageJson.version}/\${packageJson.name}-\${packageJson.version}.zip\`,
-                    licenseUrl: 'https://github.com/kittynXR/imscaler/blob/main/LICENSE'
+                    unity: "2022.3",
+                    description: "A Unity Editor tool for properly scaling VRChat avatars to match real-world proportions while maintaining VR immersion.",
+                    author: {
+                      name: "kittyn cat",
+                      email: "",
+                      url: "https://github.com/kittynXR"
+                    },
+                    url: \`https://github.com/kittynXR/imscaler/releases/download/v\${packageJson.version}/cat.kittyn.immersive_scaler-\${packageJson.version}.zip\`,
+                    licenseUrl: "https://github.com/kittynXR/imscaler/LICENSE"
                   }
                 }
               }
