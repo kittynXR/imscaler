@@ -24,7 +24,6 @@
             "url": "https://github.com/kittynXR"
           },
           "url": "https://github.com/kittynXR/imscaler/releases/download/v1.0.8/cat.kittyn.immersive_scaler-1.0.8.zip",
-          "repo": "https://github.com/kittynXR/imscaler",
           "keywords": [
             "vrchat",
             "avatar",
@@ -33,11 +32,6 @@
             "immersive",
             "ndmf"
           ],
-          "category": "Tools",
-          "dependencies": {
-            "nadena.dev.ndmf": "1.0.0",
-            "com.vrchat.avatars": "3.0.0"
-          },
           "vpmDependencies": {
             "nadena.dev.ndmf": "^1.0.0",
             "com.vrchat.avatars": "^3.0.0"
