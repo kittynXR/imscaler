@@ -72,7 +72,7 @@ fi
 # Update package.json
 print_info "Updating package.json..."
 sed -i "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" VRChatImmersiveScaler/package.json
-sed -i "s/download\/v$CURRENT_VERSION\/dev.catnet.immersivescaler-$CURRENT_VERSION.zip/download\/v$NEW_VERSION\/dev.catnet.immersivescaler-$NEW_VERSION.zip/" VRChatImmersiveScaler/package.json
+sed -i "s/download\/v$CURRENT_VERSION\/cat.kittyn.immersive_scaler-$CURRENT_VERSION.zip/download\/v$NEW_VERSION\/cat.kittyn.immersive_scaler-$NEW_VERSION.zip/" VRChatImmersiveScaler/package.json
 
 # Create the zip package
 print_info "Creating release package..."
