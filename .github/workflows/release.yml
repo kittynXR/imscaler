@@ -39,21 +39,24 @@ jobs:
           // Read package.json
           const packageJson = JSON.parse(fs.readFileSync('VRChatImmersiveScaler/package.json', 'utf8'));
           
-          // Create the listing structure
+          // Create the listing structure - minimal format for VCC compatibility
           const listing = {
             name: source.name,
-            id: source.id,
-            url: source.url,
             author: source.author,
-            description: source.description,
-            infoLink: source.infoLink,
-            bannerUrl: source.bannerUrl,
+            url: source.url,
+            id: source.id,
             packages: {
               [packageJson.name]: {
                 versions: {
                   [packageJson.version]: {
-                    ...packageJson,
-                    url: \`https://github.com/\${process.env.GITHUB_REPOSITORY}/releases/download/v\${packageJson.version}/\${packageJson.name}-\${packageJson.version}.zip\`
+                    name: packageJson.name,
+                    displayName: packageJson.displayName,
+                    version: packageJson.version,
+                    unity: packageJson.unity,
+                    description: packageJson.description,
+                    author: packageJson.author,
+                    url: \`https://github.com/\${process.env.GITHUB_REPOSITORY}/releases/download/v\${packageJson.version}/\${packageJson.name}-\${packageJson.version}.zip\`,
+                    licenseUrl: 'https://github.com/kittynXR/imscaler/blob/main/LICENSE'
                   }
                 }
               }
