@@ -3,12 +3,6 @@
   "id": "cat.kittyn.listing",
   "url": "https://immersive_scaler.kittyn.cat/index.json",
   "author": "kittyn cat",
-  "description": "VRChat avatar scaling tools for proper real-world proportions and VR immersion",
-  "infoLink": {
-    "url": "https://github.com/kittynXR/imscaler",
-    "text": "View on GitHub"
-  },
-  "bannerUrl": "",
   "packages": {
     "cat.kittyn.immersive_scaler": {
       "versions": {
@@ -24,19 +18,11 @@
             "url": "https://github.com/kittynXR"
           },
           "url": "https://github.com/kittynXR/imscaler/releases/download/v1.0.8/cat.kittyn.immersive_scaler-1.0.8.zip",
-          "keywords": [
-            "vrchat",
-            "avatar",
-            "scaling",
-            "vr",
-            "immersive",
-            "ndmf"
-          ],
           "vpmDependencies": {
             "nadena.dev.ndmf": "^1.0.0",
             "com.vrchat.avatars": "^3.0.0"
           },
-          "license": "MIT"
+          "licenseUrl": "https://github.com/kittynXR/imscaler/LICENSE"
         }
       }
     }
