@@ -253,6 +253,7 @@ namespace VRChatImmersiveScaler
         private bool isPreviewActive = false;
         private Vector3 originalViewPosition;
         private Dictionary<Transform, TransformState> originalTransformStates = new Dictionary<Transform, TransformState>();
+        private VRCAvatarDescriptor previewDescriptor;
         
         // Helper class to store transform state
         private class TransformState
@@ -291,6 +292,15 @@ namespace VRChatImmersiveScaler
         {
             var window = GetWindow<ImmersiveScalerWindow>("Immersive Avatar Scaler");
             window.minSize = new Vector2(400, 600);
+        }
+        
+        private void OnDestroy()
+        {
+            // Cancel preview if window is closed while in preview mode
+            if (isPreviewActive)
+            {
+                CancelPreview();
+            }
         }
         
         private void OnGUI()
@@ -430,6 +440,12 @@ namespace VRChatImmersiveScaler
         private void OnDisable()
         {
             SceneView.duringSceneGui -= OnSceneGUI;
+            
+            // Cancel preview if window loses focus or is closed
+            if (isPreviewActive)
+            {
+                CancelPreview();
+            }
         }
         
         
@@ -744,6 +760,9 @@ namespace VRChatImmersiveScaler
                 return;
             }
             
+            // Store references for cleanup
+            previewDescriptor = descriptor;
+            
             // Store original state
             originalViewPosition = descriptor.ViewPosition;
             originalTransformStates.Clear();
@@ -766,6 +785,7 @@ namespace VRChatImmersiveScaler
             // Simply exit preview mode - changes are already applied
             isPreviewActive = false;
             originalTransformStates.Clear();
+            previewDescriptor = null;
             Repaint();
         }
         
@@ -773,7 +793,15 @@ namespace VRChatImmersiveScaler
         {
             if (!isPreviewActive) return;
             
-            var descriptor = selectedAvatar.GetComponent<VRCAvatarDescriptor>();
+            // Try to get descriptor from selected avatar first
+            var descriptor = selectedAvatar != null ? selectedAvatar.GetComponent<VRCAvatarDescriptor>() : null;
+            
+            // Fall back to stored descriptor if needed
+            if (descriptor == null && previewDescriptor != null)
+            {
+                descriptor = previewDescriptor;
+            }
+            
             if (descriptor != null)
             {
                 descriptor.ViewPosition = originalViewPosition;
@@ -792,7 +820,13 @@ namespace VRChatImmersiveScaler
             
             isPreviewActive = false;
             originalTransformStates.Clear();
-            EditorUtility.SetDirty(selectedAvatar);
+            previewDescriptor = null;
+            
+            if (selectedAvatar != null)
+            {
+                EditorUtility.SetDirty(selectedAvatar);
+            }
+            
             Repaint();
         }
         
@@ -821,8 +855,9 @@ namespace VRChatImmersiveScaler
                 Undo.RecordObject(t, "Rescale Avatar");
             }
             
-            // Measure original eye height before scaling
+            // Measure original eye height and position before scaling
             float originalEyeHeight = scalerCore.GetEyeHeight();
+            Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
             
             // Pass measurement configuration to parameters
             parameters.targetHeightMethod = targetHeightMethod;
@@ -834,10 +869,30 @@ namespace VRChatImmersiveScaler
             
             scalerCore.ScaleAvatar(parameters);
             
-            // Update ViewPosition based on eye height change
-            float newEyeHeight = scalerCore.GetEyeHeight();
-            float eyeHeightRatio = newEyeHeight / originalEyeHeight;
-            descriptor.ViewPosition = descriptor.ViewPosition * eyeHeightRatio;
+            // Update ViewPosition using local space tracking
+            Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
+            
+            // Calculate the eye movement in local space
+            Vector3 eyeMovementDelta = newEyeLocalPos - originalEyeLocalPos;
+            
+            // Apply the movement to the ViewPosition
+            descriptor.ViewPosition = descriptor.ViewPosition + eyeMovementDelta;
+            
+            // Clamp ViewPosition.y to reasonable bounds
+            Animator animator = selectedAvatar.GetComponent<Animator>();
+            if (animator != null)
+            {
+                Transform chest = animator.GetBoneTransform(HumanBodyBones.Chest);
+                Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
+                if (chest != null && head != null)
+                {
+                    float minY = selectedAvatar.transform.InverseTransformPoint(chest.position).y;
+                    float maxY = selectedAvatar.transform.InverseTransformPoint(head.position).y + 0.1f;
+                    Vector3 clampedViewPos = descriptor.ViewPosition;
+                    clampedViewPos.y = Mathf.Clamp(clampedViewPos.y, minY, maxY);
+                    descriptor.ViewPosition = clampedViewPos;
+                }
+            }
             
             EditorUtility.SetDirty(selectedAvatar);
             EditorUtility.SetDirty(descriptor);

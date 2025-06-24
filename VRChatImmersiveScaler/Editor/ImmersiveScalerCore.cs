@@ -162,6 +162,44 @@ namespace VRChatImmersiveScaler
             return avatarRoot.transform.position.y + 1.5f; // Default height
         }
         
+        // Get eye position in local space relative to avatar root
+        public Vector3 GetEyePositionLocal()
+        {
+            Transform leftEye = GetBone(HumanBodyBones.LeftEye);
+            Transform rightEye = GetBone(HumanBodyBones.RightEye);
+            Vector3 eyeWorldPos;
+            
+            if (leftEye != null && rightEye != null)
+            {
+                eyeWorldPos = (leftEye.position + rightEye.position) / 2f;
+            }
+            else if (leftEye != null)
+            {
+                eyeWorldPos = leftEye.position;
+            }
+            else if (rightEye != null)
+            {
+                eyeWorldPos = rightEye.position;
+            }
+            else
+            {
+                // Fallback to head position
+                Transform head = GetBone(HumanBodyBones.Head);
+                if (head != null)
+                {
+                    eyeWorldPos = head.position;
+                }
+                else
+                {
+                    // Last resort - estimate based on avatar height
+                    eyeWorldPos = avatarRoot.transform.position + Vector3.up * 1.5f;
+                }
+            }
+            
+            // Convert world position to local position relative to avatar root
+            return avatarRoot.transform.InverseTransformPoint(eyeWorldPos);
+        }
+        
         // Calculate head to hand distance (VRChat's scaling metric - measures to elbow)
         public float HeadToHand()
         {
@@ -347,11 +385,17 @@ namespace VRChatImmersiveScaler
             Debug.Log($"Current measurements - Lowest: {lowestPoint}, Height (using {parameters.armToHeightHeightMethod}): {currentHeight}");
             
             // Use the custom scale ratio from parameters with the selected arm measurement method
-            float viewZ = GetViewZ(parameters.customScaleRatio, parameters.armToHeightRatioMethod) + parameters.extraLegLength;
+            float baseViewZ = GetViewZ(parameters.customScaleRatio, parameters.armToHeightRatioMethod);
+            float viewZ = baseViewZ + parameters.extraLegLength;
             float eyeZ = currentHeight;
             
             float rescaleRatio = eyeZ / viewZ;
-            Debug.Log($"ViewZ: {viewZ}, EyeZ: {eyeZ}, RescaleRatio: {rescaleRatio}");
+            
+            // Calculate what the rescale ratio would be without extra leg length
+            float baseRescaleRatio = eyeZ / baseViewZ;
+            
+            Debug.Log($"ViewZ: {viewZ} (base: {baseViewZ}, extra: {parameters.extraLegLength}), EyeZ: {eyeZ}, RescaleRatio: {rescaleRatio}");
+            Debug.Log($"Extra Leg Length effect: base rescale ratio = {baseRescaleRatio:F4}, with extra = {rescaleRatio:F4}, difference = {baseRescaleRatio - rescaleRatio:F4}");
             
             // Calculate leg and arm scaling ratios
             float legLength = GetLegLength(parameters.useBoneBasedFloorCalculation);
@@ -407,14 +451,18 @@ namespace VRChatImmersiveScaler
             Debug.Log($"Final scale ratios - Legs: {legScaleRatio}, Arms: {armScaleRatio}");
             
             // Apply leg scaling
-            float legThickness = parameters.legThickness / 100f + legScaleRatio * (1f - parameters.legThickness / 100f);
+            // Simple thickness adjustment: 0% = 0.8x, 50% = 1.0x, 100% = 1.2x
+            float legThicknessNorm = parameters.legThickness / 100f;
+            float legThickness = 0.8f + (legThicknessNorm * 0.4f);
             Debug.Log($"Leg thickness calculation: {parameters.legThickness}% -> {legThickness}");
             
             ScaleLegs(legScaleRatio, legThickness, parameters.scaleFoot, parameters.thighPercentage / 100f);
             
             // Apply arm scaling
-            float armThickness = parameters.armThickness / 100f + armScaleRatio * parameters.armThickness / 100f;
-            Debug.Log($"Arm thickness: {armThickness}");
+            // Simple thickness adjustment: 0% = 0.8x, 50% = 1.0x, 100% = 1.2x
+            float armThicknessNorm = parameters.armThickness / 100f;
+            float armThickness = 0.8f + (armThicknessNorm * 0.4f);
+            Debug.Log($"Arm thickness calculation: {parameters.armThickness}% -> {armThickness}");
             
             ScaleArms(armScaleRatio, armThickness, parameters.scaleHand);
             
@@ -453,6 +501,7 @@ namespace VRChatImmersiveScaler
             Transform rightFoot = GetBone(HumanBodyBones.RightFoot);
             
             Debug.Log($"ScaleLegs - legScaleRatio: {legScaleRatio}, thickness: {thickness}, thighPercentage: {thighPercentage}");
+            Debug.Log($"Thickness parameter: {thickness}, should be different from legScaleRatio: {legScaleRatio}");
             
             // Get current leg proportions
             float[] legProportions = GetLegProportions();
@@ -462,18 +511,39 @@ namespace VRChatImmersiveScaler
             
             Debug.Log($"Current leg proportions - Thigh: {thighPortion}, Calf: {calfPortion}, Foot: {footPortion}");
             
-            // Calculate scaling for each part
-            // In Blender, the scaling is more complex with foot portions
-            // For Unity, we'll use a simpler approach initially
-            float thighScale = legScaleRatio;
-            float calfScale = legScaleRatio;
+            // Calculate scaling for each part based on thigh percentage
+            float targetThighRatio = thighPercentage;
+            float currentThighRatio = thighPortion / (thighPortion + calfPortion);
+            
+            // Adjust scales to achieve target thigh percentage while maintaining overall leg scale
+            float thighScale, calfScale;
+            
+            if (Mathf.Abs(currentThighRatio - targetThighRatio) > 0.01f) // Only adjust if there's a significant difference
+            {
+                // Calculate how much to adjust each segment to achieve target ratio
+                float thighAdjustment = targetThighRatio / currentThighRatio;
+                float calfAdjustment = (1f - targetThighRatio) / (1f - currentThighRatio);
+                
+                // Apply adjustments while maintaining overall leg scale
+                thighScale = legScaleRatio * Mathf.Sqrt(thighAdjustment);
+                calfScale = legScaleRatio * Mathf.Sqrt(calfAdjustment);
+                
+                Debug.Log($"Thigh percentage adjustment - Current: {currentThighRatio:F3}, Target: {targetThighRatio:F3}");
+                Debug.Log($"Adjustments - Thigh: {thighAdjustment:F3}, Calf: {calfAdjustment:F3}");
+            }
+            else
+            {
+                // No adjustment needed, use uniform scaling
+                thighScale = legScaleRatio;
+                calfScale = legScaleRatio;
+            }
             
             // Clamp values to prevent extreme scaling
             thighScale = Mathf.Clamp(thighScale, 0.1f, 10f);
             calfScale = Mathf.Clamp(calfScale, 0.1f, 10f);
             thickness = Mathf.Clamp(thickness, 0.1f, 10f);
             
-            Debug.Log($"Final scales - Thigh: {thighScale}, Calf: {calfScale}");
+            Debug.Log($"Final scales - Thigh: {thighScale}, Calf: {calfScale}, Thickness: {thickness}");
             
             // In Unity, we need to determine which axis to scale along
             // Most humanoid rigs have bones extending along the Y axis locally
@@ -485,6 +555,7 @@ namespace VRChatImmersiveScaler
                 Vector3 boneDirection = GetBoneDirection(leftUpperLeg);
                 Vector3 newScale = GetDirectionalScale(boneDirection, thighScale, thickness);
                 Debug.Log($"Left upper leg - Direction: {boneDirection}, New scale: {newScale}");
+                Debug.Log($"   Length axis scale: {(boneDirection.y != 0 ? newScale.y : (boneDirection.x != 0 ? newScale.x : newScale.z))}, Thickness axes: X={newScale.x}, Z={newScale.z}");
                 leftUpperLeg.localScale = newScale;
             }
             if (rightUpperLeg != null)
@@ -1028,23 +1099,15 @@ namespace VRChatImmersiveScaler
         {
             float lowestPoint = GetLowestPoint(useBoneBasedCalculation);
             
-            // Set position explicitly to ensure Y is exactly 0
+            // Move avatar so that its lowest point is at Y=0
+            // If lowestPoint is negative (below root), we need to move up
+            // If lowestPoint is positive (above root), we need to move down
             Vector3 currentPos = avatarRoot.transform.position;
             avatarRoot.transform.position = new Vector3(
                 currentPos.x,
-                currentPos.y - lowestPoint, // This should result in exactly 0
+                -lowestPoint,  // This ensures the lowest point ends up at Y=0
                 currentPos.z
             );
-            
-            // Double-check and force to exactly 0 if very close
-            if (Mathf.Abs(avatarRoot.transform.position.y) < 0.001f)
-            {
-                avatarRoot.transform.position = new Vector3(
-                    avatarRoot.transform.position.x,
-                    0f,
-                    avatarRoot.transform.position.z
-                );
-            }
             
             Debug.Log($"ImmersiveScaler: Moved to floor. Lowest point was {lowestPoint}, new Y position: {avatarRoot.transform.position.y}");
         }
@@ -1066,14 +1129,10 @@ namespace VRChatImmersiveScaler
             float scaleRatio = targetHeight / currentHeight;
             avatarRoot.transform.localScale *= scaleRatio;
             
-            // After uniform scaling, check if we need to adjust position
-            // This handles cases where the scaling might have moved the avatar off the floor
-            float newLowestPoint = GetLowestPoint(useBoneBasedCalculation);
-            if (Mathf.Abs(newLowestPoint) > 0.001f)
-            {
-                Debug.Log($"ImmersiveScaler: Adjusting position after scale. New lowest point: {newLowestPoint}");
-                avatarRoot.transform.position -= new Vector3(0, newLowestPoint, 0);
-            }
+            // Note: We don't adjust position after scaling because:
+            // 1. MoveToFloor has already positioned the avatar correctly
+            // 2. Uniform scaling shouldn't change the floor position if the pivot is set correctly
+            // 3. Recalculating lowest point after scaling can introduce small errors due to mesh bounds recalculation
         }
         
         private void CenterModel()
@@ -1118,7 +1177,7 @@ namespace VRChatImmersiveScaler
         public bool upperBodyUseLegacy = false;
         
         public bool skipScale = false;
-        public bool skipFloor = false;
+        public bool skipFloor = true;
         public bool skipAdjust = false;
         
         public bool useBoneBasedFloorCalculation = false;

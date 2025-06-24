@@ -219,6 +219,8 @@ namespace VRChatImmersiveScaler.Editor
         // Preview state tracking
         private bool isPreviewActive = false;
         private Dictionary<Transform, TransformState> originalTransformStates = new Dictionary<Transform, TransformState>();
+        private VRCAvatarDescriptor previewAvatar = null;
+        private Vector3 storedOriginalViewPosition;
         
         // Helper class to store transform state
         private class TransformState
@@ -263,12 +265,80 @@ namespace VRChatImmersiveScaler.Editor
             
             // Subscribe to scene GUI
             SceneView.duringSceneGui += OnSceneGUI;
+            
+            // Subscribe to selection changes to auto-cancel preview
+            Selection.selectionChanged += OnSelectionChanged;
         }
         
         private void OnDisable()
         {
             // Unsubscribe from scene GUI
             SceneView.duringSceneGui -= OnSceneGUI;
+            
+            // Unsubscribe from selection changes
+            Selection.selectionChanged -= OnSelectionChanged;
+            
+            // Cancel preview if active
+            if (isPreviewActive)
+            {
+                // First try using the component reference
+                var component = (ImmersiveScalerComponent)target;
+                if (component != null)
+                {
+                    var avatar = component.GetComponentInParent<VRCAvatarDescriptor>();
+                    if (avatar != null)
+                    {
+                        ResetPreview(component, avatar);
+                        return;
+                    }
+                }
+                
+                // If component is null (being deleted), use stored references
+                if (previewAvatar != null)
+                {
+                    ResetPreviewWithStoredReferences();
+                }
+            }
+        }
+        
+        private void OnDestroy()
+        {
+            // This is called when the inspector is being destroyed
+            // Make sure to clean up preview if it's still active
+            if (isPreviewActive && previewAvatar != null)
+            {
+                ResetPreviewWithStoredReferences();
+            }
+        }
+        
+        private void OnSelectionChanged()
+        {
+            // Check if selection changed away from our component
+            if (isPreviewActive && target != null)
+            {
+                var component = (ImmersiveScalerComponent)target;
+                bool isStillSelected = false;
+                
+                // Check if our component is still in the selection
+                foreach (var obj in Selection.objects)
+                {
+                    if (obj == component || obj == component.gameObject)
+                    {
+                        isStillSelected = true;
+                        break;
+                    }
+                }
+                
+                // If not selected anymore, cancel preview
+                if (!isStillSelected)
+                {
+                    var avatar = component.GetComponentInParent<VRCAvatarDescriptor>();
+                    if (avatar != null)
+                    {
+                        ResetPreview(component, avatar);
+                    }
+                }
+            }
         }
         
         private void OnSceneGUI(SceneView sceneView)
@@ -307,7 +377,8 @@ namespace VRChatImmersiveScaler.Editor
             serializedObject.Update();
             
             // Current Stats Section
-            ImmersiveScalerUIShared.DrawCurrentStatsSection(paramProvider, scalerCore, avatar, ref showCurrentStats);
+            Vector3 origViewPos = component.hasStoredOriginalViewPosition ? component.originalViewPosition : avatar.ViewPosition;
+            ImmersiveScalerUIShared.DrawCurrentStatsSection(paramProvider, scalerCore, avatar, ref showCurrentStats, isPreviewActive, origViewPos);
             
             // Measurement Config Section
             ImmersiveScalerUIShared.DrawMeasurementConfigSection(paramProvider, scalerCore, ref showDebugMeasurements, ref showDebugRatios);
@@ -370,6 +441,10 @@ namespace VRChatImmersiveScaler.Editor
         
         private void StartPreview(ImmersiveScalerComponent component, VRCAvatarDescriptor avatar)
         {
+            // Store references for cleanup
+            previewAvatar = avatar;
+            storedOriginalViewPosition = avatar.ViewPosition;
+            
             PreviewScaling(component, avatar);
         }
         
@@ -401,8 +476,9 @@ namespace VRChatImmersiveScaler.Editor
             // Apply scaling
             var scalerCore = new ImmersiveScalerCore(avatar.gameObject);
             
-            // Measure original eye height
+            // Measure original eye height and position
             float originalEyeHeight = scalerCore.GetEyeHeight();
+            Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
             
             var parameters = new ScalingParameters
             {
@@ -435,10 +511,26 @@ namespace VRChatImmersiveScaler.Editor
             
             scalerCore.ScaleAvatar(parameters);
             
-            // Update ViewPosition
-            float newEyeHeight = scalerCore.GetEyeHeight();
-            float eyeHeightRatio = newEyeHeight / originalEyeHeight;
-            avatar.ViewPosition = component.originalViewPosition * eyeHeightRatio;
+            // Update ViewPosition using local space tracking
+            Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
+            
+            // Calculate the eye movement in local space
+            Vector3 eyeMovementDelta = newEyeLocalPos - originalEyeLocalPos;
+            
+            // Apply the movement to the original ViewPosition
+            avatar.ViewPosition = component.originalViewPosition + eyeMovementDelta;
+            
+            // Clamp ViewPosition.y to reasonable bounds (between chest and slightly above head)
+            Transform chest = scalerCore.GetBone(HumanBodyBones.Chest);
+            Transform head = scalerCore.GetBone(HumanBodyBones.Head);
+            if (chest != null && head != null)
+            {
+                float minY = avatar.transform.InverseTransformPoint(chest.position).y;
+                float maxY = avatar.transform.InverseTransformPoint(head.position).y + 0.1f;
+                Vector3 clampedViewPos = avatar.ViewPosition;
+                clampedViewPos.y = Mathf.Clamp(clampedViewPos.y, minY, maxY);
+                avatar.ViewPosition = clampedViewPos;
+            }
             
             // Apply additional tools if enabled
             if (component.applyFingerSpreading)
@@ -482,9 +574,37 @@ namespace VRChatImmersiveScaler.Editor
             
             originalTransformStates.Clear();
             isPreviewActive = false;
+            previewAvatar = null;
             
             EditorUtility.SetDirty(avatar);
             EditorUtility.SetDirty(avatar.gameObject);
+        }
+        
+        private void ResetPreviewWithStoredReferences()
+        {
+            if (!isPreviewActive || previewAvatar == null) return;
+            
+            // Restore ViewPosition using stored reference
+            previewAvatar.ViewPosition = storedOriginalViewPosition;
+            EditorUtility.SetDirty(previewAvatar);
+            
+            // Restore all transforms
+            foreach (var kvp in originalTransformStates)
+            {
+                if (kvp.Key != null)
+                {
+                    kvp.Value.RestoreTo(kvp.Key);
+                    EditorUtility.SetDirty(kvp.Key);
+                }
+            }
+            
+            originalTransformStates.Clear();
+            isPreviewActive = false;
+            
+            EditorUtility.SetDirty(previewAvatar);
+            EditorUtility.SetDirty(previewAvatar.gameObject);
+            
+            previewAvatar = null;
         }
         
         private void AutoPopulateValues(ImmersiveScalerComponent component)

@@ -103,7 +103,7 @@ namespace VRChatImmersiveScaler
         
         [Header("Debug Options")]
         public bool skipMainRescale = false;
-        public bool skipMoveToFloor = false;
+        public bool skipMoveToFloor = true;
         public bool skipHeightScaling = false;
         
         [Tooltip("Use bone positions instead of mesh bounds for floor calculation (more reliable but less accurate)")]

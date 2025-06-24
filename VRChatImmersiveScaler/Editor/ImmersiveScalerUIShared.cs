@@ -100,7 +100,7 @@ namespace VRChatImmersiveScaler
             void SetDirty();
         }
 
-        public static void DrawCurrentStatsSection(IParameterProvider parameters, ImmersiveScalerCore scalerCore, VRCAvatarDescriptor avatar, ref bool showCurrentStats)
+        public static void DrawCurrentStatsSection(IParameterProvider parameters, ImmersiveScalerCore scalerCore, VRCAvatarDescriptor avatar, ref bool showCurrentStats, bool isPreviewActive = false, Vector3 originalViewPosition = default)
         {
             showCurrentStats = EditorGUILayout.Foldout(showCurrentStats, "Current Avatar Stats", true);
             if (showCurrentStats && scalerCore != null)
@@ -115,7 +115,16 @@ namespace VRChatImmersiveScaler
                 DrawMeasurementWithToggle(parameters, "Eye Height:", $"{eyeHeight:F3}m", "eye_height");
                 
                 // ViewPosition
-                DrawMeasurementWithToggle(parameters, "ViewPosition:", avatar.ViewPosition.ToString("F3"), "view_position");
+                string viewPosDisplay;
+                if (isPreviewActive && originalViewPosition != default)
+                {
+                    viewPosDisplay = $"{originalViewPosition.ToString("F3")} (original)";
+                }
+                else
+                {
+                    viewPosDisplay = avatar.ViewPosition.ToString("F3");
+                }
+                DrawMeasurementWithToggle(parameters, "ViewPosition:", viewPosDisplay, "view_position");
                 
                 // Selected upper body ratio
                 float upperBodyRatio;
@@ -373,7 +382,7 @@ namespace VRChatImmersiveScaler
             else
             {
                 parameters.armThickness = EditorGUILayout.Slider(
-                    new GUIContent("Arm Thickness", "How much arm thickness to maintain"),
+                    new GUIContent("Arm Thickness", "How much arm thickness to maintain (0% = scale fully, 100% = keep original)"),
                     parameters.armThickness, 0f, 100f
                 );
             }
@@ -384,19 +393,17 @@ namespace VRChatImmersiveScaler
             }
             EditorGUILayout.EndHorizontal();
             
-            // Leg Thickness (Deprecated)
-            GUI.enabled = false;
+            // Leg Thickness
             EditorGUILayout.BeginHorizontal();
             if (serializedObject != null)
             {
-                EditorGUILayout.LabelField("̶L̶e̶g̶ ̶T̶h̶i̶c̶k̶n̶e̶s̶s̶", strikethroughStyle);
-                var legThicknessProp = serializedObject.FindProperty("legThickness");
-                legThicknessProp.floatValue = EditorGUILayout.Slider(legThicknessProp.floatValue, 0f, 100f);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("legThickness"), 
+                    new GUIContent("Leg Thickness", "How much leg thickness to maintain (0% = scale fully, 100% = keep original)"));
             }
             else
             {
                 parameters.legThickness = EditorGUILayout.Slider(
-                    new GUIContent("̶L̶e̶g̶ ̶T̶h̶i̶c̶k̶n̶e̶s̶s̶", "How much leg thickness to maintain"),
+                    new GUIContent("Leg Thickness", "How much leg thickness to maintain (0% = scale fully, 100% = keep original)"),
                     parameters.legThickness, 0f, 100f
                 );
             }
@@ -406,21 +413,18 @@ namespace VRChatImmersiveScaler
                 parameters.SetDirty();
             }
             EditorGUILayout.EndHorizontal();
-            GUI.enabled = true;
             
-            // Thigh Percentage (Deprecated)
-            GUI.enabled = false;
+            // Thigh Percentage
             EditorGUILayout.BeginHorizontal();
             if (serializedObject != null)
             {
-                EditorGUILayout.LabelField("̶U̶p̶p̶e̶r̶ ̶L̶e̶g̶ ̶%̶", strikethroughStyle);
-                var thighProp = serializedObject.FindProperty("thighPercentage");
-                thighProp.floatValue = EditorGUILayout.Slider(thighProp.floatValue, 10f, 90f);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("thighPercentage"), 
+                    new GUIContent("Upper Leg %", "Percentage of leg that is thigh (10-90%)"));
             }
             else
             {
                 parameters.thighPercentage = EditorGUILayout.Slider(
-                    new GUIContent("̶U̶p̶p̶e̶r̶ ̶L̶e̶g̶ ̶%̶", "Percentage of leg that is thigh"),
+                    new GUIContent("Upper Leg %", "Percentage of leg that is thigh (10-90%)"),
                     parameters.thighPercentage, 10f, 90f
                 );
             }
@@ -430,7 +434,6 @@ namespace VRChatImmersiveScaler
                 parameters.SetDirty();
             }
             EditorGUILayout.EndHorizontal();
-            GUI.enabled = true;
             
             EditorGUILayout.EndVertical();
         }
@@ -512,10 +515,13 @@ namespace VRChatImmersiveScaler
                 }
                 else
                 {
+                    // Extra Leg Length (Deprecated - doesn't work)
+                    GUI.enabled = false;
                     parameters.extraLegLength = EditorGUILayout.FloatField(
-                        new GUIContent("Extra Leg Length", "Additional leg length below the floor"),
+                        new GUIContent("̶E̶x̶t̶r̶a̶ ̶L̶e̶g̶ ̶L̶e̶n̶g̶t̶h̶", "Additional leg length below the floor"),
                         parameters.extraLegLength
                     );
+                    GUI.enabled = true;
                     
                     // Scale Relative (Deprecated)
                     GUI.enabled = false;
@@ -547,51 +553,39 @@ namespace VRChatImmersiveScaler
                 
                 if (serializedObject != null)
                 {
-                    // Skip Main Rescale (Deprecated)
-                    GUI.enabled = false;
+                    // Skip Main Rescale
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("skipMainRescale"),
-                        new GUIContent("̶S̶k̶i̶p̶ ̶M̶a̶i̶n̶ ̶R̶e̶s̶c̶a̶l̶e̶", "Skip proportion adjustments"));
-                    GUI.enabled = true;
+                        new GUIContent("Skip Main Rescale", "Skip proportion adjustments"));
                     
-                    // Skip Move to Floor (Deprecated)
-                    GUI.enabled = false;
+                    // Skip Move to Floor
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("skipMoveToFloor"),
-                        new GUIContent("̶S̶k̶i̶p̶ ̶M̶o̶v̶e̶ ̶t̶o̶ ̶F̶l̶o̶o̶r̶", "Don't move avatar to Y=0"));
-                    GUI.enabled = true;
+                        new GUIContent("Skip Move to Floor", "Don't move avatar to Y=0"));
                     
-                    // Skip Height Scaling (Deprecated)
-                    GUI.enabled = false;
+                    // Skip Height Scaling
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("skipHeightScaling"),
-                        new GUIContent("̶S̶k̶i̶p̶ ̶H̶e̶i̶g̶h̶t̶ ̶S̶c̶a̶l̶i̶n̶g̶", "Don't scale to target height"));
-                    GUI.enabled = true;
+                        new GUIContent("Skip Height Scaling", "Don't scale to target height"));
                     
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("useBoneBasedFloorCalculation"));
                 }
                 else
                 {
-                    // Skip Main Rescale (Deprecated)
-                    GUI.enabled = false;
+                    // Skip Main Rescale
                     parameters.skipMainRescale = EditorGUILayout.Toggle(
-                        new GUIContent("̶S̶k̶i̶p̶ ̶M̶a̶i̶n̶ ̶R̶e̶s̶c̶a̶l̶e̶", "Skip proportion adjustments"),
+                        new GUIContent("Skip Main Rescale", "Skip proportion adjustments"),
                         parameters.skipMainRescale
                     );
-                    GUI.enabled = true;
                     
-                    // Skip Move to Floor (Deprecated)
-                    GUI.enabled = false;
+                    // Skip Move to Floor
                     parameters.skipMoveToFloor = EditorGUILayout.Toggle(
-                        new GUIContent("̶S̶k̶i̶p̶ ̶M̶o̶v̶e̶ ̶t̶o̶ ̶F̶l̶o̶o̶r̶", "Don't move avatar to Y=0"),
+                        new GUIContent("Skip Move to Floor", "Don't move avatar to Y=0"),
                         parameters.skipMoveToFloor
                     );
-                    GUI.enabled = true;
                     
-                    // Skip Height Scaling (Deprecated)
-                    GUI.enabled = false;
+                    // Skip Height Scaling
                     parameters.skipHeightScaling = EditorGUILayout.Toggle(
-                        new GUIContent("̶S̶k̶i̶p̶ ̶H̶e̶i̶g̶h̶t̶ ̶S̶c̶a̶l̶i̶n̶g̶", "Don't scale to target height"),
+                        new GUIContent("Skip Height Scaling", "Don't scale to target height"),
                         parameters.skipHeightScaling
                     );
-                    GUI.enabled = true;
                     
                     parameters.useBoneBasedFloorCalculation = EditorGUILayout.Toggle(
                         new GUIContent("Use Bone-Based Floor", "Use bone positions instead of mesh bounds for floor calculation"),
