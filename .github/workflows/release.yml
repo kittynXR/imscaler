@@ -26,6 +26,21 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Fetch existing index.json from gh-pages
+        run: |
+          # Try to fetch existing index.json from gh-pages branch
+          if git ls-remote --heads origin gh-pages | grep gh-pages; then
+            git fetch origin gh-pages
+            if git show origin/gh-pages:index.json > /dev/null 2>&1; then
+              git show origin/gh-pages:index.json > index.json
+              echo "Fetched existing index.json from gh-pages"
+            else
+              echo "No existing index.json found in gh-pages"
+            fi
+          else
+            echo "No gh-pages branch exists yet"
+          fi
+
       - name: Build VPM Listing
         run: node scripts/build-index.js
 
