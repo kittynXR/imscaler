@@ -480,6 +480,9 @@ namespace VRChatImmersiveScaler.Editor
             float originalEyeHeight = scalerCore.GetEyeHeight();
             Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
             
+            // Store original avatar scale
+            Vector3 originalAvatarScale = avatar.transform.localScale;
+            
             var parameters = new ScalingParameters
             {
                 targetHeight = component.targetHeight,
@@ -514,23 +517,12 @@ namespace VRChatImmersiveScaler.Editor
             // Update ViewPosition using local space tracking
             Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
             
-            // Calculate the eye movement in local space
-            Vector3 eyeMovementDelta = newEyeLocalPos - originalEyeLocalPos;
+            // Calculate the actual scale ratio applied to the avatar
+            Vector3 newAvatarScale = avatar.transform.localScale;
+            float scaleRatio = newAvatarScale.y / originalAvatarScale.y;
             
-            // Apply the movement to the original ViewPosition
-            avatar.ViewPosition = component.originalViewPosition + eyeMovementDelta;
-            
-            // Clamp ViewPosition.y to reasonable bounds (between chest and slightly above head)
-            Transform chest = scalerCore.GetBone(HumanBodyBones.Chest);
-            Transform head = scalerCore.GetBone(HumanBodyBones.Head);
-            if (chest != null && head != null)
-            {
-                float minY = avatar.transform.InverseTransformPoint(chest.position).y;
-                float maxY = avatar.transform.InverseTransformPoint(head.position).y + 0.1f;
-                Vector3 clampedViewPos = avatar.ViewPosition;
-                clampedViewPos.y = Mathf.Clamp(clampedViewPos.y, minY, maxY);
-                avatar.ViewPosition = clampedViewPos;
-            }
+            // Scale the ViewPosition by the same ratio as the avatar
+            avatar.ViewPosition = component.originalViewPosition * scaleRatio;
             
             // Apply additional tools if enabled
             if (component.applyFingerSpreading)

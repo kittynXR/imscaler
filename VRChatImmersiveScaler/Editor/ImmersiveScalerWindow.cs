@@ -859,6 +859,9 @@ namespace VRChatImmersiveScaler
             float originalEyeHeight = scalerCore.GetEyeHeight();
             Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
             
+            // Store original avatar scale
+            Vector3 originalAvatarScale = selectedAvatar.transform.localScale;
+            
             // Pass measurement configuration to parameters
             parameters.targetHeightMethod = targetHeightMethod;
             parameters.armToHeightRatioMethod = armToHeightRatioMethod;
@@ -872,27 +875,12 @@ namespace VRChatImmersiveScaler
             // Update ViewPosition using local space tracking
             Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
             
-            // Calculate the eye movement in local space
-            Vector3 eyeMovementDelta = newEyeLocalPos - originalEyeLocalPos;
+            // Calculate the actual scale ratio applied to the avatar
+            Vector3 newAvatarScale = selectedAvatar.transform.localScale;
+            float scaleRatio = newAvatarScale.y / originalAvatarScale.y;
             
-            // Apply the movement to the ViewPosition
-            descriptor.ViewPosition = descriptor.ViewPosition + eyeMovementDelta;
-            
-            // Clamp ViewPosition.y to reasonable bounds
-            Animator animator = selectedAvatar.GetComponent<Animator>();
-            if (animator != null)
-            {
-                Transform chest = animator.GetBoneTransform(HumanBodyBones.Chest);
-                Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
-                if (chest != null && head != null)
-                {
-                    float minY = selectedAvatar.transform.InverseTransformPoint(chest.position).y;
-                    float maxY = selectedAvatar.transform.InverseTransformPoint(head.position).y + 0.1f;
-                    Vector3 clampedViewPos = descriptor.ViewPosition;
-                    clampedViewPos.y = Mathf.Clamp(clampedViewPos.y, minY, maxY);
-                    descriptor.ViewPosition = clampedViewPos;
-                }
-            }
+            // Scale the ViewPosition by the same ratio as the avatar
+            descriptor.ViewPosition = originalViewPosition * scaleRatio;
             
             EditorUtility.SetDirty(selectedAvatar);
             EditorUtility.SetDirty(descriptor);

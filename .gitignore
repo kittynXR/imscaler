@@ -1,2 +1,6 @@
 # Blender addon directory
 immersive_scaler/
+
+# Prefabulous packages (imported for reference only)
+prefabulous-avatar/
+prefabulous-universal/

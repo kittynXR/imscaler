@@ -1,6 +1,7 @@
 using System.Reflection;
 using nadena.dev.ndmf;
 using UnityEngine;
+using UnityEditor;
 using VRC.SDK3.Avatars.Components;
 
 [assembly: ExportsPlugin(typeof(VRChatImmersiveScaler.Editor.ImmersiveScalerPlugin))]
@@ -46,6 +47,9 @@ namespace VRChatImmersiveScaler.Editor
                     float originalAvatarHeight = originalEyeHeight - originalLowestPoint;
                     Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
                     
+                    // Store original avatar scale
+                    Vector3 originalAvatarScale = ctx.AvatarRootTransform.localScale;
+                    
                     // Create parameters from component
                     var parameters = new ScalingParameters
                     {
@@ -84,37 +88,29 @@ namespace VRChatImmersiveScaler.Editor
                     float newLowestPoint = scalerCore.GetLowestPoint();
                     Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
                     
+                    // Calculate the actual scale ratio applied to the avatar
+                    Vector3 newAvatarScale = ctx.AvatarRootTransform.localScale;
+                    float scaleRatio = newAvatarScale.y / originalAvatarScale.y;
+                    
                     // Update ViewPosition to match the new eye position
                     Vector3 newViewPosition = descriptor.ViewPosition;
                     
                     // The ViewPosition is in local space relative to the avatar root
-                    // Calculate how the eye moved in local space and apply that to ViewPosition
+                    // Scale the ViewPosition proportionally with the avatar scale
                     if (!component.skipMainRescale || !component.skipHeightScaling)
                     {
-                        // Calculate the eye movement in local space
-                        Vector3 eyeMovementDelta = newEyeLocalPos - originalEyeLocalPos;
-                        
-                        // Apply the movement to the original ViewPosition
-                        newViewPosition = component.originalViewPosition + eyeMovementDelta;
-                        
-                        // Clamp ViewPosition.y to reasonable bounds (between chest and slightly above head)
-                        Transform chest = scalerCore.GetBone(HumanBodyBones.Chest);
-                        Transform head = scalerCore.GetBone(HumanBodyBones.Head);
-                        if (chest != null && head != null)
-                        {
-                            float minY = ctx.AvatarRootTransform.InverseTransformPoint(chest.position).y;
-                            float maxY = ctx.AvatarRootTransform.InverseTransformPoint(head.position).y + 0.1f;
-                            newViewPosition.y = Mathf.Clamp(newViewPosition.y, minY, maxY);
-                        }
+                        // Scale the ViewPosition by the same ratio as the avatar
+                        newViewPosition = component.originalViewPosition * scaleRatio;
                         
                         descriptor.ViewPosition = newViewPosition;
+                        EditorUtility.SetDirty(descriptor);
                         
                         // Enhanced debug logging
                         Debug.Log($"ImmersiveScaler: ViewPosition Update Details:");
                         Debug.Log($"  Original ViewPosition: {component.originalViewPosition}");
                         Debug.Log($"  New ViewPosition: {newViewPosition}");
                         Debug.Log($"  Eye Position (Local Space) - Before: {originalEyeLocalPos}, After: {newEyeLocalPos}");
-                        Debug.Log($"  Eye Movement Delta (Local): {eyeMovementDelta}");
+                        Debug.Log($"  Eye Movement Delta (Local): {newEyeLocalPos - originalEyeLocalPos}");
                         Debug.Log($"  Eye Height (World) - Before: {originalEyeHeight:F3}, After: {newEyeHeight:F3}");
                     }
                     
