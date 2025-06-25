@@ -19,6 +19,20 @@
           },
           "url": "https://github.com/kittynXR/imscaler/releases/download/v1.0.9/cat.kittyn.immersive_scaler-1.0.9.zip",
           "licenseUrl": "https://github.com/kittynXR/imscaler/LICENSE"
+        },
+        "1.0.8": {
+          "name": "cat.kittyn.immersive_scaler",
+          "displayName": "VRChat Immersive Scaler",
+          "version": "1.0.8",
+          "unity": "2022.3",
+          "description": "A Unity Editor tool for properly scaling VRChat avatars to match real-world proportions while maintaining VR immersion.",
+          "author": {
+            "name": "kittyn cat",
+            "email": "",
+            "url": "https://github.com/kittynXR"
+          },
+          "url": "https://github.com/kittynXR/imscaler/releases/download/v1.0.8/cat.kittyn.immersive_scaler-1.0.8.zip",
+          "licenseUrl": "https://github.com/kittynXR/imscaler/LICENSE"
         }
       }
     }
