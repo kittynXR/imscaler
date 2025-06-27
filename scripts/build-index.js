@@ -9,8 +9,8 @@ let existingVersions = {};
 if (fs.existsSync('index.json')) {
   try {
     const existingIndex = JSON.parse(fs.readFileSync('index.json', 'utf8'));
-    if (existingIndex.packages?.['cat.kittyn.immersive_scaler']?.versions) {
-      existingVersions = existingIndex.packages['cat.kittyn.immersive_scaler'].versions;
+    if (existingIndex.packages?.['cat.kittyn.immersive-scaler']?.versions) {
+      existingVersions = existingIndex.packages['cat.kittyn.immersive-scaler'].versions;
       console.log(`Found ${Object.keys(existingVersions).length} existing versions`);
     }
   } catch (error) {
@@ -20,7 +20,7 @@ if (fs.existsSync('index.json')) {
 
 // Add/update current version
 existingVersions[packageJson.version] = {
-  "name": "cat.kittyn.immersive_scaler",
+  "name": "cat.kittyn.immersive-scaler",
   "displayName": "VRChat Immersive Scaler",
   "version": packageJson.version,
   "unity": "2022.3",
@@ -41,7 +41,7 @@ const listing = {
   "url": "https://immersive-scaler.kittyn.cat/index.json",
   "id": "cat.kittyn.vpm",
   "packages": {
-    "cat.kittyn.immersive_scaler": {
+    "cat.kittyn.immersive-scaler": {
       "versions": existingVersions
     }
   }

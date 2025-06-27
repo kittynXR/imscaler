@@ -1,5 +1,5 @@
 {
-  "name": "cat.kittyn.immersive_scaler",
+  "name": "cat.kittyn.immersive-scaler",
   "version": "1.0.10",
   "displayName": "VRChat Immersive Scaler",
   "description": "A Unity Editor tool for properly scaling VRChat avatars to match real-world proportions while maintaining VR immersion.",
