@@ -38,7 +38,7 @@ existingVersions[packageJson.version] = {
 const listing = {
   "name": "Immersive Scaler VRChat Tools",
   "author": "kittyn cat",
-  "url": "https://immersive_scaler.kittyn.cat/index.json",
+  "url": "https://immersivescaler.kittyn.cat/index.json",
   "id": "cat.kittyn.vpm",
   "packages": {
     "cat.kittyn.immersive_scaler": {
