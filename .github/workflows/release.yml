@@ -98,20 +98,31 @@ jobs:
           VERSION=$(cat VRChatImmersiveScaler/package.json | grep '"version"' | head -1 | cut -d '"' -f 4)
           PACKAGE_NAME=$(cat VRChatImmersiveScaler/package.json | grep '"name"' | head -1 | cut -d '"' -f 4)
           
+          # Replace underscores with hyphens in package name
+          PACKAGE_NAME_HYPHEN=$(echo ${PACKAGE_NAME} | tr '_' '-')
+          
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_OUTPUT
-          echo "FILENAME=${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
+          echo "FILENAME=${PACKAGE_NAME_HYPHEN}-${VERSION}.zip" >> $GITHUB_OUTPUT
+          echo "FILENAME_LATEST=${PACKAGE_NAME_HYPHEN}.zip" >> $GITHUB_OUTPUT
           
           # Create zip file
           cd package
-          zip -r "../${PACKAGE_NAME}-${VERSION}.zip" .
+          zip -r "../${PACKAGE_NAME_HYPHEN}-${VERSION}.zip" .
           cd ..
           
-          echo "Created package: ${PACKAGE_NAME}-${VERSION}.zip"
+          # Create version-less copy
+          cp "${PACKAGE_NAME_HYPHEN}-${VERSION}.zip" "${PACKAGE_NAME_HYPHEN}.zip"
+          
+          echo "Created packages:"
+          echo "  - ${PACKAGE_NAME_HYPHEN}-${VERSION}.zip (versioned)"
+          echo "  - ${PACKAGE_NAME_HYPHEN}.zip (latest)"
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ steps.create_package.outputs.FILENAME }}
+          files: |
+            ${{ steps.create_package.outputs.FILENAME }}
+            ${{ steps.create_package.outputs.FILENAME_LATEST }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

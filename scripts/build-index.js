@@ -30,7 +30,7 @@ existingVersions[packageJson.version] = {
     "email": "",
     "url": "https://github.com/kittynXR"
   },
-  "url": `https://github.com/${process.env.GITHUB_REPOSITORY || 'kittynXR/imscaler'}/releases/download/v${packageJson.version}/cat.kittyn.immersive_scaler-${packageJson.version}.zip`,
+  "url": `https://github.com/${process.env.GITHUB_REPOSITORY || 'kittynXR/imscaler'}/releases/download/v${packageJson.version}/cat.kittyn.immersive-scaler-${packageJson.version}.zip`,
   "licenseUrl": "https://github.com/kittynXR/imscaler/LICENSE"
 };
 

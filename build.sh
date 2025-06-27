@@ -72,18 +72,23 @@ fi
 # Update package.json
 print_info "Updating package.json..."
 sed -i "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" VRChatImmersiveScaler/package.json
-sed -i "s/download\/v$CURRENT_VERSION\/cat.kittyn.immersive_scaler-$CURRENT_VERSION.zip/download\/v$NEW_VERSION\/cat.kittyn.immersive_scaler-$NEW_VERSION.zip/" VRChatImmersiveScaler/package.json
+sed -i "s/download\/v$CURRENT_VERSION\/cat.kittyn.immersive-scaler-$CURRENT_VERSION.zip/download\/v$NEW_VERSION\/cat.kittyn.immersive-scaler-$NEW_VERSION.zip/" VRChatImmersiveScaler/package.json
 
 # Create the zip package
 print_info "Creating release package..."
 cd VRChatImmersiveScaler
-zip -r ../cat.kittyn.immersive_scaler-$NEW_VERSION.zip . -x "*.meta" -x ".git/*" -x ".DS_Store"
+zip -r ../cat.kittyn.immersive-scaler-$NEW_VERSION.zip . -x "*.meta" -x ".git/*" -x ".DS_Store"
 cd ..
+
+# Create version-less copy
+print_info "Creating version-less copy..."
+cp cat.kittyn.immersive-scaler-$NEW_VERSION.zip cat.kittyn.immersive-scaler.zip
 
 # Commit changes
 print_info "Committing changes..."
 git add VRChatImmersiveScaler/package.json
-git add cat.kittyn.immersive_scaler-$NEW_VERSION.zip
+git add cat.kittyn.immersive-scaler-$NEW_VERSION.zip
+git add cat.kittyn.immersive-scaler.zip
 git commit -m "Release v$NEW_VERSION
 
 - Bump version from $CURRENT_VERSION to $NEW_VERSION
@@ -105,14 +110,15 @@ gh release create v$NEW_VERSION \
     --notes "## VRChat Immersive Scaler v$NEW_VERSION
 
 ### Installation
-1. Download \`cat.kittyn.immersive_scaler-$NEW_VERSION.zip\` below
+1. Download \`cat.kittyn.immersive-scaler-$NEW_VERSION.zip\` below
 2. Import into Unity using VRChat Creator Companion or Package Manager
 
 ### What's Changed
 - Version bump to v$NEW_VERSION
 
 See [README](https://github.com/kittynXR/imscaler#readme) for usage instructions." \
-    cat.kittyn.immersive_scaler-$NEW_VERSION.zip
+    cat.kittyn.immersive-scaler-$NEW_VERSION.zip \
+    cat.kittyn.immersive-scaler.zip
 
 print_info "Release v$NEW_VERSION completed successfully!"
 print_info "GitHub Release: https://github.com/kittynXR/imscaler/releases/tag/v$NEW_VERSION"
