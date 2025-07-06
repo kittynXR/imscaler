@@ -126,3 +126,23 @@ jobs:
             ${{ steps.create_package.outputs.FILENAME_LATEST }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  update-main-vpm:
+    needs: release
+    name: Update Main VPM Repository
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Trigger VPM Update
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.KITTYN_VPM_TOKEN }}
+          repository: kittynXR/kittyn-vpm
+          event-type: update-package
+          client-payload: '{"package_name": "cat.kittyn.immersive-scaler", "release_url": "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.version }}/cat.kittyn.immersive-scaler-${{ steps.get_version.outputs.version }}.zip"}'

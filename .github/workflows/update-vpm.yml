@@ -1,0 +1,38 @@
+# This workflow can be manually triggered to update the main VPM repository
+# Useful if automatic updates fail or for manual synchronization
+
+name: Update Main VPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  update-vpm:
+    name: Update Main VPM Repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Get package info
+        id: package
+        run: |
+          PACKAGE_NAME=$(cat package/package.json | grep '"name"' | sed -E 's/.*"name": "([^"]+)".*/\1/')
+          echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+      
+      - name: Trigger VPM Update
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.KITTYN_VPM_TOKEN }}
+          repository: kittynXR/kittyn-vpm
+          event-type: update-package
+          client-payload: |
+            {
+              "package_name": "${{ steps.package.outputs.name }}", 
+              "release_url": "https://github.com/${{ github.repository }}/releases/download/${{ inputs.version }}/${{ steps.package.outputs.name }}-${{ inputs.version }}.zip"
+            }
