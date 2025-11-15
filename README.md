@@ -4,6 +4,8 @@ A Unity tool for properly scaling VRChat avatars to match real-world proportions
 
 If you just want to scale your arms and legs, there's an easier way to do it in-game with Limb Scaler by nanochip:  https://x.com/xNanochip/status/1989030705850949650
 
+This works fine, but if you have any hidden colliders outside your avatar's bounds then it might scale you incorrectly.  Working on a fix soon tm.
+
 > **Note**: The exact IK measurement parameters VRChat uses internally are not fully documented. The current defaults are based on community research and testing. We'll update with firm defaults and bump the version once the exact parameters are confirmed.
 
 [![VCC Compatible](https://img.shields.io/badge/VCC-Compatible-green)](https://vcc.docs.vrchat.com)
