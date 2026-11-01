@@ -1,0 +1,10 @@
+{
+  "name": "VRChatImmersiveScaler.Tests",
+  "references": ["VRChatImmersiveScaler.Editor", "VRChatImmersiveScaler.Runtime", "VRC.SDKBase", "VRC.SDK3A", "nadena.dev.ndmf"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll", "VRCSDK3A.dll", "VRCSDKBase.dll"],
+  "versionDefines": [{"name":"com.vrchat.avatars","expression":"","define":"VRC_SDK_VRCSDK3"}],
+  "autoReferenced": false
+}

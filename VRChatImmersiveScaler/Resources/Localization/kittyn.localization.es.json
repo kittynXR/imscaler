@@ -340,7 +340,16 @@
     "btn_upper_body": "Cuerpo superior",
     "btn_upper_body_height": "Altura cuerpo superior",
     "btn_torso_length": "Longitud del torso",
-    "target_height_tooltip": "Altura deseada del avatar en metros"
+    "target_height_tooltip": "Altura deseada del avatar en metros",
+    "debug_report_title": "Depuración",
+    "debug_report_help": "Copia este informe cuando solicites ayuda. El estado actual es de solo lectura. Los informes de vista previa y compilación muestran los valores utilizados en ese momento; la compilación corresponde a la última pasada de Scaler en este editor, con avatar y fecha.",
+    "debug_report_current": "Estado actual",
+    "debug_report_preview": "Última vista previa",
+    "debug_report_build": "Última compilación (este editor)",
+    "debug_report_refresh": "Actualizar medidas",
+    "debug_report_copy": "Copiar informe de depuración",
+    "debug_report_no_preview": "Ejecuta la vista previa del escalado para capturar los cálculos. El informe se conserva después de cancelarla.",
+    "debug_report_no_build": "Todavía no se ha capturado ningún informe de compilación en esta sesión del editor."
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",

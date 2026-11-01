@@ -98,6 +98,14 @@ https://immersive-scaler.kittyn.cat/index.json
 
 ## 🔧 Troubleshooting
 
+### Copy a diagnostic report
+
+Expand **Debug** at the bottom of the Immersive Scaler inspector or Tools window, below the preview controls. Choose **Current state**, **Last preview**, or **Latest build (this Editor)**, then click **Copy Debug Report**. Current state is a read-only measurement snapshot; use **Refresh measurements** after changing the avatar outside the scaler UI.
+
+Preview and build reports capture the inputs, actual scaling calculations, and resulting viewpoint. A preview report remains available after cancelling. The build report identifies its avatar and capture time and covers the Immersive Scaler NDMF pass; later build plugins may still change the avatar. Reports include package versions, measurement methods, renderer bounds and rejection decisions, bone fallbacks, scale factors, and viewpoint/eye offsets. The diagnostic text uses stable English labels for support; the panel controls are localized.
+
+For a misplaced-viewpoint report, include the preview and build reports plus whether the issue appears in Unity preview, a built avatar, or VRChat. A deliberately offset viewpoint is preserved, so a nonzero eye offset alone does not prove an error.
+
 ### Common Issues
 
 **Avatar shrinks unexpectedly**

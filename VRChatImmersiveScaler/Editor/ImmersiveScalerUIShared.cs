@@ -991,7 +991,7 @@ namespace VRChatImmersiveScaler
                     {
                         if (avatar != null)
                         {
-                            Vector3 worldViewPos = avatar.transform.TransformPoint(avatar.ViewPosition);
+                            Vector3 worldViewPos = ImmersiveScalerViewpoint.GetWorldPosition(avatar);
                             Handles.color = Color.green;
                             Handles.SphereHandleCap(0, worldViewPos, Quaternion.identity, 0.05f, EventType.Repaint);
                         }

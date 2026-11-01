@@ -341,7 +341,16 @@
     "btn_upper_body": "Corps supérieur",
     "btn_upper_body_height": "Hauteur corps supérieur",
     "btn_torso_length": "Longueur du torse",
-    "target_height_tooltip": "Hauteur souhaitée de l'avatar en mètres"
+    "target_height_tooltip": "Hauteur souhaitée de l'avatar en mètres",
+    "debug_report_title": "Débogage",
+    "debug_report_help": "Copiez ce rapport pour demander de l’aide. L’état actuel est en lecture seule. Les rapports d’aperçu et de compilation indiquent les valeurs utilisées à ce moment-là ; la compilation correspond au dernier passage de Scaler dans cet éditeur, avec le nom de l’avatar et l’horodatage.",
+    "debug_report_current": "État actuel",
+    "debug_report_preview": "Dernier aperçu",
+    "debug_report_build": "Dernière compilation (cet éditeur)",
+    "debug_report_refresh": "Actualiser les mesures",
+    "debug_report_copy": "Copier le rapport de débogage",
+    "debug_report_no_preview": "Lancez l’aperçu de la mise à l’échelle pour enregistrer les calculs. Le rapport reste disponible après l’annulation.",
+    "debug_report_no_build": "Aucun rapport de compilation n’a encore été enregistré dans cette session de l’éditeur."
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",

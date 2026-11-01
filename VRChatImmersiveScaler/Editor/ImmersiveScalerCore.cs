@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 namespace VRChatImmersiveScaler
@@ -48,8 +49,18 @@ namespace VRChatImmersiveScaler
             return IsFinite(value) ? Mathf.Clamp(value, 0.1f, 10f) : fallback;
         }
 
-        private static void LogVerbose(string message)
+        // A per-operation sink; the debug panel does not enable global console spam.
+        public System.Action<string> DiagnosticLog { get; set; }
+
+        private void Warn(string message)
         {
+            DiagnosticLog?.Invoke("WARNING: " + message);
+            Debug.LogWarning(message);
+        }
+
+        private void LogVerbose(string message)
+        {
+            DiagnosticLog?.Invoke(message);
 #if KITTYN_IMMERSIVE_SCALER_DEBUG
             Debug.Log(message);
 #endif
@@ -197,6 +208,7 @@ namespace VRChatImmersiveScaler
         // Get the lowest point of all meshes (floor level)
         public float GetLowestPoint(bool useBoneBasedCalculation = false)
         {
+            DiagnosticLog?.Invoke($"Floor selection: boneBased={useBoneBasedCalculation}, rendererOverrides={useMeasurementRendererOverrides}, below-foot outlier limit={MaxAllowedMeshBelowFootBonesMeters}m");
             if (useBoneBasedCalculation)
             {
                 return GetLowestPointFromBones();
@@ -209,10 +221,11 @@ namespace VRChatImmersiveScaler
                 meshes = GetEnabledSkinnedMeshesFrom(measurementBodyRendererOverrides);
                 if (meshes.Count == 0)
                 {
+                    DiagnosticLog?.Invoke("Floor: requested Body overrides contain no enabled valid meshes; using automatic selection.");
                     if (!hasLoggedInvalidMeasurementOverridesWarning)
                     {
                         hasLoggedInvalidMeasurementOverridesWarning = true;
-                        Debug.LogWarning("ImmersiveScaler: Measurement renderer overrides are enabled but no valid Body renderers are set; falling back to automatic mesh selection");
+                        Warn("ImmersiveScaler: Measurement renderer overrides are enabled but no valid Body renderers are set; falling back to automatic mesh selection");
                     }
                     meshes = GetEnabledSkinnedMeshes();
                     candidates = FilterMeshesForFloor(meshes);
@@ -228,12 +241,14 @@ namespace VRChatImmersiveScaler
                 candidates = FilterMeshesForFloor(meshes);
             }
 
+            TraceCandidates("Floor", meshes, candidates);
             if (meshes.Count == 0)
             {
+                DiagnosticLog?.Invoke("Floor: no valid selected renderer; using bone fallback.");
                 if (!hasLoggedNoMeshesWarning)
                 {
                     hasLoggedNoMeshesWarning = true;
-                    Debug.LogWarning("ImmersiveScaler: No mesh bounds found, falling back to bone-based floor calculation");
+                    Warn("ImmersiveScaler: No mesh bounds found, falling back to bone-based floor calculation");
                 }
                 return GetLowestPointFromBones();
             }
@@ -261,10 +276,12 @@ namespace VRChatImmersiveScaler
                 // Sanity-check: if the mesh min is far below the humanoid foot bones, it's likely a prop or bad bounds.
                 if (footBoneFloor != float.MaxValue && meshLowest < footBoneFloor - MaxAllowedMeshBelowFootBonesMeters)
                 {
+                    DiagnosticLog?.Invoke($"Floor rejected {RendererPath(mesh)}: minY={meshLowest}, footY={footBoneFloor}, allowedBelow={MaxAllowedMeshBelowFootBonesMeters}");
                     ignoredOutliers++;
                     continue;
                 }
 
+                DiagnosticLog?.Invoke($"Floor accepted {RendererPath(mesh)}: minY={meshLowest}");
                 if (meshLowest < lowestPoint)
                     lowestPoint = meshLowest;
             }
@@ -274,17 +291,19 @@ namespace VRChatImmersiveScaler
                 if (ignoredOutliers > 0 && !hasLoggedFloorOutlierWarning)
                 {
                     hasLoggedFloorOutlierWarning = true;
-                    Debug.LogWarning($"ImmersiveScaler: Ignored {ignoredOutliers} outlier mesh bounds while finding floor; using bone-based floor instead");
+                    Warn($"ImmersiveScaler: Ignored {ignoredOutliers} outlier mesh bounds while finding floor; using bone-based floor instead");
                 }
+                DiagnosticLog?.Invoke($"Floor: no usable mesh candidates; bone fallback Y={boneFloor}");
                 return boneFloor;
             }
 
             if (ignoredOutliers > 0 && !hasLoggedFloorOutlierWarning)
             {
                 hasLoggedFloorOutlierWarning = true;
-                Debug.LogWarning($"ImmersiveScaler: Ignored {ignoredOutliers} outlier mesh bounds while finding floor (likely props or bad bounds)");
+                Warn($"ImmersiveScaler: Ignored {ignoredOutliers} outlier mesh bounds while finding floor (likely props or bad bounds)");
             }
 
+            DiagnosticLog?.Invoke($"Floor result: Y={lowestPoint}");
             return lowestPoint;
         }
 
@@ -327,13 +346,14 @@ namespace VRChatImmersiveScaler
                 lowestPoint = avatarRoot.transform.position.y;
             }
 
-            // Debug.Log($"ImmersiveScaler: Lowest point from bones: {lowestPoint}");
+            DiagnosticLog?.Invoke($"Bone floor result: Y={lowestPoint} (feet/toes, then all mapped bones, then root)");
             return lowestPoint;
         }
 
         // Get the highest point of all meshes
         public float GetHighestPoint()
         {
+            DiagnosticLog?.Invoke($"Height selection: rendererOverrides={useMeasurementRendererOverrides}, above-head outlier limit={MaxAllowedMeshAboveHeadBoneMeters}m");
             List<SkinnedMeshRenderer> meshes;
             List<SkinnedMeshRenderer> candidates;
             if (useMeasurementRendererOverrides)
@@ -352,10 +372,11 @@ namespace VRChatImmersiveScaler
                 meshes = overrideCandidates;
                 if (meshes.Count == 0)
                 {
+                    DiagnosticLog?.Invoke("Height: requested Body/Head overrides contain no enabled valid meshes; using automatic selection.");
                     if (!hasLoggedInvalidMeasurementOverridesWarning)
                     {
                         hasLoggedInvalidMeasurementOverridesWarning = true;
-                        Debug.LogWarning("ImmersiveScaler: Measurement renderer overrides are enabled but no valid Body/Head renderers are set; falling back to automatic mesh selection");
+                        Warn("ImmersiveScaler: Measurement renderer overrides are enabled but no valid Body/Head renderers are set; falling back to automatic mesh selection");
                     }
                     meshes = GetEnabledSkinnedMeshes();
                     candidates = FilterMeshesForHeight(meshes);
@@ -371,6 +392,7 @@ namespace VRChatImmersiveScaler
                 candidates = FilterMeshesForHeight(meshes);
             }
 
+            TraceCandidates("Height", meshes, candidates);
             Transform head = GetBone(HumanBodyBones.Head);
             float headY = head != null ? head.position.y : float.NaN;
 
@@ -384,10 +406,12 @@ namespace VRChatImmersiveScaler
                 // Sanity-check: if mesh max is wildly above the head bone, it's likely a prop or bad bounds.
                 if (!float.IsNaN(headY) && meshHighest > headY + MaxAllowedMeshAboveHeadBoneMeters)
                 {
+                    DiagnosticLog?.Invoke($"Height rejected {RendererPath(mesh)}: maxY={meshHighest}, headY={headY}, allowedAbove={MaxAllowedMeshAboveHeadBoneMeters}");
                     ignoredOutliers++;
                     continue;
                 }
 
+                DiagnosticLog?.Invoke($"Height accepted {RendererPath(mesh)}: maxY={meshHighest}");
                 if (meshHighest > highestPoint)
                     highestPoint = meshHighest;
             }
@@ -397,9 +421,11 @@ namespace VRChatImmersiveScaler
                 // Fallback to head position
                 if (head != null)
                 {
+                    DiagnosticLog?.Invoke($"Height: no usable mesh; head + 0.1m fallback Y={head.position.y + 0.1f}");
                     return head.position.y + 0.1f;
                 }
 
+                DiagnosticLog?.Invoke("Height: no mapped head or usable mesh; root + 1.5m fallback.");
                 return avatarRoot.transform.position.y + 1.5f;
             }
 
@@ -414,11 +440,25 @@ namespace VRChatImmersiveScaler
                 if (!hasLoggedHeightOutlierWarning)
                 {
                     hasLoggedHeightOutlierWarning = true;
-                    Debug.LogWarning($"ImmersiveScaler: Ignored {ignoredOutliers} outlier mesh bounds while finding height (likely props or bad bounds)");
+                    Warn($"ImmersiveScaler: Ignored {ignoredOutliers} outlier mesh bounds while finding height (likely props or bad bounds)");
                 }
             }
 
+            DiagnosticLog?.Invoke($"Height result: Y={highestPoint}; minimum head + 0.1m is enforced when a head is mapped.");
             return highestPoint;
+        }
+
+        private string RendererPath(SkinnedMeshRenderer renderer)
+        {
+            return AnimationUtility.CalculateTransformPath(renderer.transform, avatarRoot.transform);
+        }
+
+        private void TraceCandidates(string measurement, List<SkinnedMeshRenderer> meshes, List<SkinnedMeshRenderer> candidates)
+        {
+            if (DiagnosticLog == null) return;
+            foreach (var renderer in meshes)
+                DiagnosticLog(measurement + " " + RendererPath(renderer) + ": " +
+                    (candidates.Contains(renderer) ? "selected candidate" : "excluded by humanoid-bone filter"));
         }
 
         // Get eye height (average of both eyes)
@@ -499,7 +539,7 @@ namespace VRChatImmersiveScaler
 
             if (head == null || rightUpperArm == null || rightLowerArm == null)
             {
-                Debug.LogWarning("Cannot calculate head to hand distance - missing bones");
+                Warn("Cannot calculate head to hand distance - missing bones");
                 return 0.4537f; // Return VRChat default
             }
 
@@ -532,7 +572,7 @@ namespace VRChatImmersiveScaler
 
             if (head == null || rightUpperArm == null || rightLowerArm == null || rightHand == null)
             {
-                Debug.LogWarning("Cannot calculate head to wrist distance - missing bones");
+                Warn("Cannot calculate head to wrist distance - missing bones");
                 return GetArmLength(); // Fallback
             }
 
@@ -554,6 +594,7 @@ namespace VRChatImmersiveScaler
         {
             float armValue = GetArmByMethod(armMethod);
             // VRChat formula: viewHeight = (armLength / ratio) + 0.005
+            DiagnosticLog?.Invoke($"Arm-derived height: {armMethod}={armValue}; arm / ratio + 0.005 = {armValue} / {customScaleRatio} + 0.005");
             return (armValue / customScaleRatio) + 0.005f;
         }
 
@@ -630,6 +671,7 @@ namespace VRChatImmersiveScaler
         {
             if (animator == null || !animator.isHuman)
             {
+                DiagnosticLog?.Invoke("ERROR: Avatar must have a humanoid animator; scaling skipped.");
                 Debug.LogError("Avatar must have a humanoid animator!");
                 return;
             }
@@ -640,6 +682,7 @@ namespace VRChatImmersiveScaler
             // Skip main rescale if requested
             if (parameters.skipAdjust)
             {
+                DiagnosticLog?.Invoke($"Main rescale skipped; skip height={parameters.skipScale}, skip floor={parameters.skipFloor}, center={parameters.centerModel}");
                 // Scale to target height
                 if (!parameters.skipScale)
                 {
@@ -672,7 +715,7 @@ namespace VRChatImmersiveScaler
 
             if (!IsUsablePositive(currentHeight))
             {
-                Debug.LogWarning($"ImmersiveScaler: Invalid avatar height measurement ({currentHeight}); skipping scale operation");
+                Warn($"ImmersiveScaler: Invalid avatar height measurement ({currentHeight}); skipping scale operation");
                 return;
             }
 
@@ -685,7 +728,7 @@ namespace VRChatImmersiveScaler
 
             if (!IsUsablePositive(baseViewZ) || !IsUsablePositive(viewZ))
             {
-                Debug.LogWarning($"ImmersiveScaler: Invalid VRChat view height measurement (base={baseViewZ}, adjusted={viewZ}); skipping scale operation");
+                Warn($"ImmersiveScaler: Invalid VRChat view height measurement (base={baseViewZ}, adjusted={viewZ}); skipping scale operation");
                 return;
             }
 
@@ -696,7 +739,7 @@ namespace VRChatImmersiveScaler
 
             if (!IsUsablePositive(rescaleRatio))
             {
-                Debug.LogWarning($"ImmersiveScaler: Invalid rescale ratio ({rescaleRatio}); skipping scale operation");
+                Warn($"ImmersiveScaler: Invalid rescale ratio ({rescaleRatio}); skipping scale operation");
                 return;
             }
 
@@ -708,7 +751,7 @@ namespace VRChatImmersiveScaler
             float legHeightPortion = legLength / eyeZ;
             if (!IsUsablePositive(legHeightPortion))
             {
-                Debug.LogWarning($"ImmersiveScaler: Invalid leg height portion ({legHeightPortion}); skipping scale operation");
+                Warn($"ImmersiveScaler: Invalid leg height portion ({legHeightPortion}); skipping scale operation");
                 return;
             }
             LogVerbose($"LegLength: {legLength}, LegHeightPortion: {legHeightPortion}");
@@ -732,7 +775,7 @@ namespace VRChatImmersiveScaler
                     GetUpperBodyRatio(parameters.upperBodyUseNeck, parameters.upperBodyTorsoUseNeck, parameters.useBoneBasedFloorCalculation);
                 if (!IsUsablePositive(currentUbp) || currentUbp >= 1f)
                 {
-                    Debug.LogWarning($"ImmersiveScaler: Invalid current upper body percentage ({currentUbp}); skipping scale operation");
+                    Warn($"ImmersiveScaler: Invalid current upper body percentage ({currentUbp}); skipping scale operation");
                     return;
                 }
                 float targetUbp = Mathf.Clamp(parameters.upperBodyPercentage / 100f, 0.01f, 0.99f);
@@ -753,7 +796,7 @@ namespace VRChatImmersiveScaler
                     GetUpperBodyRatio(parameters.upperBodyUseNeck, parameters.upperBodyTorsoUseNeck, parameters.useBoneBasedFloorCalculation);
                 if (!IsUsablePositive(ubp))
                 {
-                    Debug.LogWarning($"ImmersiveScaler: Invalid upper body percentage ({ubp}); skipping scale operation");
+                    Warn($"ImmersiveScaler: Invalid upper body percentage ({ubp}); skipping scale operation");
                     return;
                 }
                 float targetUbp = Mathf.Clamp(parameters.upperBodyPercentage / 100f, 0.01f, 0.99f);
@@ -765,7 +808,7 @@ namespace VRChatImmersiveScaler
                 float rescaleLegRatio = 1f / (legHeightPortion * (legScaleRatio - 1f) + 1f);
                 if (!IsUsablePositive(rescaleLegRatio))
                 {
-                    Debug.LogWarning($"ImmersiveScaler: Invalid leg rescale ratio ({rescaleLegRatio}); skipping scale operation");
+                    Warn($"ImmersiveScaler: Invalid leg rescale ratio ({rescaleLegRatio}); skipping scale operation");
                     return;
                 }
                 float rescaleArmRatio = rescaleRatio / rescaleLegRatio;
@@ -774,6 +817,7 @@ namespace VRChatImmersiveScaler
                 LogVerbose($"LegScaleRatio: {legScaleRatio}, RescaleLegRatio: {rescaleLegRatio}, RescaleArmRatio: {rescaleArmRatio}");
             }
 
+            DiagnosticLog?.Invoke($"Raw scale ratios: legs={legScaleRatio}, arms={armScaleRatio}; finite ratios clamped to [0.1, 10].");
             legScaleRatio = SafeClampScale(legScaleRatio);
             armScaleRatio = SafeClampScale(armScaleRatio);
 
@@ -856,7 +900,7 @@ namespace VRChatImmersiveScaler
 
             if (!IsFinite(currentThighRatio) || currentThighRatio <= 0.01f || currentThighRatio >= 0.99f)
             {
-                Debug.LogWarning($"ImmersiveScaler: Invalid current thigh ratio ({currentThighRatio}); using uniform leg scaling");
+                Warn($"ImmersiveScaler: Invalid current thigh ratio ({currentThighRatio}); using uniform leg scaling");
                 thighScale = legScaleRatio;
                 calfScale = legScaleRatio;
             }
@@ -869,7 +913,7 @@ namespace VRChatImmersiveScaler
                 // Apply adjustments while maintaining overall leg scale
                 if (!IsUsablePositive(thighAdjustment) || !IsUsablePositive(calfAdjustment))
                 {
-                    Debug.LogWarning($"ImmersiveScaler: Invalid thigh/calf adjustment values ({thighAdjustment}, {calfAdjustment}); using uniform leg scaling");
+                    Warn($"ImmersiveScaler: Invalid thigh/calf adjustment values ({thighAdjustment}, {calfAdjustment}); using uniform leg scaling");
                     thighScale = legScaleRatio;
                     calfScale = legScaleRatio;
                 }
@@ -1112,7 +1156,7 @@ namespace VRChatImmersiveScaler
             float shoulderRadicand = (totalLength - neckLength) * (totalLength + neckLength);
             if (shoulderRadicand < 0f)
             {
-                Debug.LogWarning("ImmersiveScaler: Invalid shoulder/neck measurement while calculating arm scaling; leaving arm scale unchanged");
+                Warn("ImmersiveScaler: Invalid shoulder/neck measurement while calculating arm scaling; leaving arm scale unchanged");
                 return 1f;
             }
 
@@ -1121,7 +1165,7 @@ namespace VRChatImmersiveScaler
             float armRadicand = (adjustedTotalLength - neckLength) * (adjustedTotalLength + neckLength);
             if (armRadicand < 0f)
             {
-                Debug.LogWarning("ImmersiveScaler: Requested arm scaling is geometrically invalid; leaving arm scale unchanged");
+                Warn("ImmersiveScaler: Requested arm scaling is geometrically invalid; leaving arm scale unchanged");
                 return 1f;
             }
 
@@ -1494,18 +1538,20 @@ namespace VRChatImmersiveScaler
 
             if (!IsUsablePositive(currentHeight) || !IsUsablePositive(targetHeight))
             {
-                Debug.LogWarning($"ImmersiveScaler: Cannot scale to target height. Current={currentHeight}, Target={targetHeight}");
+                Warn($"ImmersiveScaler: Cannot scale to target height. Current={currentHeight}, Target={targetHeight}");
                 return;
             }
 
             float scaleRatio = targetHeight / currentHeight;
             if (!IsUsablePositive(scaleRatio))
             {
-                Debug.LogWarning($"ImmersiveScaler: Invalid height scale ratio ({scaleRatio}); skipping height scale");
+                Warn($"ImmersiveScaler: Invalid height scale ratio ({scaleRatio}); skipping height scale");
                 return;
             }
 
+            DiagnosticLog?.Invoke($"Height scale: target={targetHeight} / measured={currentHeight} = factor={scaleRatio}; useEyes={scaleToEyes}; floorY={lowestPoint}; rootScaleBefore={avatarRoot.transform.localScale}");
             avatarRoot.transform.localScale *= scaleRatio;
+            DiagnosticLog?.Invoke($"Height scale: rootScaleAfter={avatarRoot.transform.localScale}");
         }
 
         private void CenterModel()

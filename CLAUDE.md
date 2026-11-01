@@ -55,10 +55,16 @@ VRChat Immersive Scaler is a Unity Editor tool that scales VRChat avatars to mat
 
 The tool automatically adjusts VRChat's ViewPosition after scaling:
 1. Reads the descriptor ViewPosition at preview/build start
-2. Measures original local eye position before scaling
-3. Applies scaling transformations
+2. Converts that world-distance vector to avatar-local coordinates with `InverseTransformVector` and captures the local offset from the eyes
+3. Applies scaling transformations and additional tools, including the hip adjustment
 4. Measures the final local eye position
-5. Updates VRCAvatarDescriptor.ViewPosition while preserving the user's original descriptor offset from the eye bones
+5. Converts the final eye-plus-offset back with `TransformVector` for `VRCAvatarDescriptor.ViewPosition`
+
+`ViewPosition` is a world-distance vector relative to the avatar root, not an unscaled local point. The world viewpoint is `root.position + ViewPosition`. Use `ImmersiveScalerViewpoint` for conversion and visualization. Reconcile after every operation that can move the head, including when main/height scaling is skipped.
+
+The Debug foldout provides read-only measurements, the last preview trace, and the latest Scaler build-pass trace in the current Editor session. Capture actual calculations through the core's scoped `DiagnosticLog`; do not duplicate the scaling algorithm in the diagnostic UI. Keep diagnostic state editor-only and preserve preview reports after cancellation.
+
+EditMode regression tests are in `VRChatImmersiveScaler/Tests/Editor`. Add `cat.kittyn.immersive-scaler` to a validation project's manifest `testables` list to run them. The fixtures construct synthetic humanoids and cover root-scale/ViewPosition conversion, intentional offsets, hip-only processing, inactive-bone restoration, avatar switching, NDMF processing, and read-only diagnostic capture.
 
 ### Testing Workflow
 

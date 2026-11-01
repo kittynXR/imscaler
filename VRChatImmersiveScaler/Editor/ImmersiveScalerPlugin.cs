@@ -42,7 +42,6 @@ namespace VRChatImmersiveScaler.Editor
                         return;
                     }
                     
-                    Vector3 buildStartViewPosition = descriptor.ViewPosition;
                     
                     LogDebug($"ImmersiveScaler: Starting scaling process. Target height: {component.targetHeight}m");
                     
@@ -54,80 +53,35 @@ namespace VRChatImmersiveScaler.Editor
                         component.measurementHeadRenderers
                     );
                     
-                    // Measure original eye height and position
-                    Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
-                    
-                    // Create parameters from component
-                    var parameters = new ScalingParameters
+                    var parameters = ImmersiveScalerDiagnostics.ParametersFrom(component);
+                    using (var report = new ImmersiveScalerDiagnostics(descriptor, scalerCore, parameters,
+                        "NDMF build: Immersive Scaler pass (later plugins may still change the avatar)",
+                        ImmersiveScalerDiagnostics.DescribeTools(component)))
                     {
-                        targetHeight = component.targetHeight,
-                        upperBodyPercentage = component.upperBodyPercentage,
-                        customScaleRatio = component.customScaleRatio,
-                        armThickness = component.armThickness,
-                        legThickness = component.legThickness,
-                        thighPercentage = component.thighPercentage,
-                        scaleHand = component.scaleHand,
-                        scaleFoot = component.scaleFoot,
-                        scaleEyes = component.scaleEyes,
-                        centerModel = component.centerModel,
-                        extraLegLength = component.extraLegLength,
-                        scaleRelative = component.scaleRelative,
-                        armToLegs = component.armToLegs,
-                        keepHeadSize = component.keepHeadSize,
-                        skipAdjust = component.skipMainRescale,
-                        skipFloor = component.skipMoveToFloor,
-                        skipScale = component.skipHeightScaling,
-                        useBoneBasedFloorCalculation = component.useBoneBasedFloorCalculation,
-                        // Pass measurement method configuration
-                        targetHeightMethod = component.targetHeightMethod,
-                        armToHeightRatioMethod = component.armToHeightRatioMethod,
-                        armToHeightHeightMethod = component.armToHeightHeightMethod,
-                        upperBodyUseNeck = component.upperBodyUseNeck,
-                        upperBodyTorsoUseNeck = component.upperBodyTorsoUseNeck,
-                        upperBodyUseLegacy = component.upperBodyUseLegacy
-                    };
-                    
-                    // Apply scaling
-                    scalerCore.ScaleAvatar(parameters);
-                    
-                    // Measure new eye position after scaling
-                    Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
-                    
-                    if (!component.skipMainRescale || !component.skipHeightScaling)
-                    {
-                        // Preserve any intentional ViewPosition offset from eye bones while using
-                        // the measured final local eye position instead of root-scale approximation.
-                        Vector3 newViewPosition = newEyeLocalPos + (buildStartViewPosition - originalEyeLocalPos);
+                        Vector3 eyeOffset = ImmersiveScalerViewpoint.CaptureEyeOffset(descriptor, scalerCore);
+                        report.Record("Original eye offset (avatar-local): " + eyeOffset.ToString("F6"));
+                        scalerCore.ScaleAvatar(parameters);
+
+                        // Apply additional tools if enabled
+                        if (component.applyFingerSpreading)
+                        {
+                            LogDebug($"ImmersiveScaler: Applying finger spreading with factor {component.fingerSpreadFactor}");
+                            ImmersiveScalerFingerUtility.SpreadFingers(ctx.AvatarRootTransform.gameObject,
+                                component.fingerSpreadFactor, component.spareThumb);
+                        }
                         
-                        descriptor.ViewPosition = newViewPosition;
+                        if (component.applyShrinkHipBone)
+                        {
+                            LogDebug("ImmersiveScaler: Applying hip bone fix");
+                            ApplyHipBoneFix(ctx.AvatarRootTransform.gameObject);
+                        }
+                        
+                        ImmersiveScalerViewpoint.Reconcile(descriptor, scalerCore, eyeOffset);
                         EditorUtility.SetDirty(descriptor);
-                        
-                        // Enhanced debug logging
-#if KITTYN_IMMERSIVE_SCALER_DEBUG
-                        LogDebug($"ImmersiveScaler: ViewPosition Update Details:");
-                        LogDebug($"  Original ViewPosition: {buildStartViewPosition}");
-                        LogDebug($"  New ViewPosition: {newViewPosition}");
-                        LogDebug($"  Eye Position (Local Space) - Before: {originalEyeLocalPos}, After: {newEyeLocalPos}");
-                        LogDebug($"  Eye Movement Delta (Local): {newEyeLocalPos - originalEyeLocalPos}");
-#endif
+                        report.Record("Viewpoint reconciled after scaling and additional tools.");
+                        ImmersiveScalerDiagnostics.LastBuildReport = report.Complete();
                     }
-                    
-                    LogDebug($"ImmersiveScaler: Scaling complete. Final height: {scalerCore.GetHighestPoint() - scalerCore.GetLowestPoint(component.useBoneBasedFloorCalculation):F3}m");
-                    
-                    // Apply additional tools if enabled
-                    if (component.applyFingerSpreading)
-                    {
-                        LogDebug($"ImmersiveScaler: Applying finger spreading with factor {component.fingerSpreadFactor}");
-                        ImmersiveScalerFingerUtility.SpreadFingers(ctx.AvatarRootTransform.gameObject, 
-                            component.fingerSpreadFactor, component.spareThumb);
-                    }
-                    
-                    if (component.applyShrinkHipBone)
-                    {
-                        LogDebug("ImmersiveScaler: Applying hip bone fix");
-                        ApplyHipBoneFix(ctx.AvatarRootTransform.gameObject);
-                    }
-                    
+
                     // Remove component after processing
                     Object.DestroyImmediate(component);
                 });

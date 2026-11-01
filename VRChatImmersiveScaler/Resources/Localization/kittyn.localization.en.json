@@ -382,7 +382,16 @@
     "field_skip_main_rescale": "Skip Main Rescale",
     "field_skip_move_to_floor": "Skip Move To Floor",
     "field_skip_height_scaling": "Skip Height Scaling",
-    "field_use_bone_based_floor_calculation": "Use Bone Based Floor Calculation"
+    "field_use_bone_based_floor_calculation": "Use Bone Based Floor Calculation",
+    "debug_report_title": "Debug",
+    "debug_report_help": "Copy this report when asking for support. Current state is read-only. Preview/build reports show the values used at that time; a build report is the latest Scaler pass in this Editor, identified by avatar and timestamp.",
+    "debug_report_current": "Current state",
+    "debug_report_preview": "Last preview",
+    "debug_report_build": "Latest build (this Editor)",
+    "debug_report_refresh": "Refresh measurements",
+    "debug_report_copy": "Copy Debug Report",
+    "debug_report_no_preview": "Run Preview Scaling to capture its calculations. The report remains available after cancelling the preview.",
+    "debug_report_no_build": "No build report has been captured in this Editor session."
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",
