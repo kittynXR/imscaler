@@ -340,7 +340,16 @@
     "btn_upper_body": "상체",
     "btn_upper_body_height": "상체 높이",
     "btn_torso_length": "몸통 길이",
-    "target_height_tooltip": "아바타의 원하는 키 (미터)"
+    "target_height_tooltip": "아바타의 원하는 키 (미터)",
+    "debug_report_title": "디버그",
+    "debug_report_help": "지원을 요청할 때 이 보고서를 복사하세요. 현재 상태는 읽기 전용입니다. 미리보기 및 빌드 보고서는 실행 당시 사용한 값을 보여 줍니다. 빌드 보고서는 이 에디터에서 마지막으로 실행한 Scaler 처리를 나타내며 아바타 이름과 시간을 포함합니다.",
+    "debug_report_current": "현재 상태",
+    "debug_report_preview": "마지막 미리보기",
+    "debug_report_build": "최근 빌드 (이 에디터)",
+    "debug_report_refresh": "측정값 새로 고침",
+    "debug_report_copy": "디버그 보고서 복사",
+    "debug_report_no_preview": "스케일링 미리보기를 실행하면 계산 과정이 기록됩니다. 미리보기를 취소해도 보고서는 유지됩니다.",
+    "debug_report_no_build": "이 에디터 세션에서 기록된 빌드 보고서가 없습니다."
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",

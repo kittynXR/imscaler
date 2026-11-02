@@ -228,6 +228,7 @@ namespace VRChatImmersiveScaler.Editor
         private Dictionary<Transform, TransformState> originalTransformStates = new Dictionary<Transform, TransformState>();
         private VRCAvatarDescriptor previewAvatar = null;
         private Vector3 storedOriginalViewPosition;
+        private readonly ImmersiveScalerDebugPanel debugPanel = new ImmersiveScalerDebugPanel();
 
         // Helper class to store transform state
         private class TransformState
@@ -507,7 +508,12 @@ namespace VRChatImmersiveScaler.Editor
 
             EditorGUILayout.HelpBox(KittynLocalization.Get("immersive_scaler.comp_build_info"), MessageType.Info);
 
-            serializedObject.ApplyModifiedProperties();
+            bool settingsChanged = serializedObject.ApplyModifiedProperties();
+            if (settingsChanged || GUI.changed) debugPanel.InvalidateCurrent();
+            debugPanel.Draw(() => ImmersiveScalerDiagnostics.Snapshot(avatar, scalerCore,
+                ImmersiveScalerDiagnostics.ParametersFrom(component),
+                isPreviewActive ? "Current state: preview is active" : "Current state: edit mode",
+                ImmersiveScalerDiagnostics.DescribeTools(component)));
         }
 
         private void ApplyMeasurementOverridesToScalerCore()
@@ -609,18 +615,28 @@ namespace VRChatImmersiveScaler.Editor
             previewAvatar = avatar;
             storedOriginalViewPosition = avatar.ViewPosition;
 
-            PreviewScaling(component, avatar);
+            try
+            {
+                PreviewScaling(component, avatar);
+            }
+            catch
+            {
+                ResetPreview(component, avatar);
+                throw;
+            }
         }
 
         private void PreviewScaling(ImmersiveScalerComponent component, VRCAvatarDescriptor avatar)
         {
             // Store original state for manual restoration
             originalTransformStates.Clear();
-            Transform[] allTransforms = avatar.GetComponentsInChildren<Transform>();
+            Transform[] allTransforms = avatar.GetComponentsInChildren<Transform>(true);
             foreach (var t in allTransforms)
             {
                 originalTransformStates[t] = new TransformState(t);
             }
+
+            isPreviewActive = true;
 
             // Also record for undo as a backup
             Undo.RecordObject(avatar.transform, "Preview Immersive Scaling");
@@ -638,64 +654,32 @@ namespace VRChatImmersiveScaler.Editor
                 component.measurementHeadRenderers
             );
 
-            // Measure original eye position
-            Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
-
-            var parameters = new ScalingParameters
+            var parameters = ImmersiveScalerDiagnostics.ParametersFrom(component);
+            using (var report = new ImmersiveScalerDiagnostics(avatar, scalerCore, parameters,
+                "Component preview", ImmersiveScalerDiagnostics.DescribeTools(component)))
             {
-                targetHeight = component.targetHeight,
-                upperBodyPercentage = component.upperBodyPercentage,
-                customScaleRatio = component.customScaleRatio,
-                armThickness = component.armThickness,
-                legThickness = component.legThickness,
-                thighPercentage = component.thighPercentage,
-                scaleHand = component.scaleHand,
-                scaleFoot = component.scaleFoot,
-                scaleEyes = component.scaleEyes,
-                centerModel = component.centerModel,
-                extraLegLength = component.extraLegLength,
-                scaleRelative = component.scaleRelative,
-                armToLegs = component.armToLegs,
-                keepHeadSize = component.keepHeadSize,
-                skipAdjust = component.skipMainRescale,
-                skipFloor = component.skipMoveToFloor,
-                skipScale = component.skipHeightScaling,
-                useBoneBasedFloorCalculation = component.useBoneBasedFloorCalculation,
-                // Pass measurement method configuration
-                targetHeightMethod = component.targetHeightMethod,
-                armToHeightRatioMethod = component.armToHeightRatioMethod,
-                armToHeightHeightMethod = component.armToHeightHeightMethod,
-                upperBodyUseNeck = component.upperBodyUseNeck,
-                upperBodyTorsoUseNeck = component.upperBodyTorsoUseNeck,
-                upperBodyUseLegacy = component.upperBodyUseLegacy
-            };
+                Vector3 eyeOffset = ImmersiveScalerViewpoint.CaptureEyeOffset(avatar, scalerCore);
+                report.Record("Original eye offset (avatar-local): " + eyeOffset.ToString("F6"));
+                scalerCore.ScaleAvatar(parameters);
 
-            scalerCore.ScaleAvatar(parameters);
+                // Apply additional tools if enabled
+                if (component.applyFingerSpreading)
+                {
+                    ImmersiveScalerFingerUtility.SpreadFingers(avatar.gameObject,
+                        component.fingerSpreadFactor, component.spareThumb);
+                }
 
-            Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
-            if (!component.skipMainRescale || !component.skipHeightScaling)
-            {
-                // Preserve intentional ViewPosition offset from eye bones in preview.
-                avatar.ViewPosition = newEyeLocalPos + (storedOriginalViewPosition - originalEyeLocalPos);
+                if (component.applyShrinkHipBone)
+                {
+                    ApplyHipBoneFix(avatar);
+                }
+
+                ImmersiveScalerViewpoint.Reconcile(avatar, scalerCore, eyeOffset);
+                report.Record("Viewpoint reconciled after scaling and additional tools.");
+                debugPanel.SetPreview(report.Complete());
             }
-
-            // Apply additional tools if enabled
-            if (component.applyFingerSpreading)
-            {
-                ImmersiveScalerFingerUtility.SpreadFingers(avatar.gameObject,
-                    component.fingerSpreadFactor, component.spareThumb);
-            }
-
-            if (component.applyShrinkHipBone)
-            {
-                ApplyHipBoneFix(avatar);
-            }
-
             EditorUtility.SetDirty(avatar);
             EditorUtility.SetDirty(avatar.gameObject);
-
-            // Mark preview as active
-            isPreviewActive = true;
         }
 
         private void ResetPreview(ImmersiveScalerComponent component, VRCAvatarDescriptor avatar)
@@ -717,6 +701,7 @@ namespace VRChatImmersiveScaler.Editor
 
             originalTransformStates.Clear();
             isPreviewActive = false;
+            debugPanel.InvalidateCurrent();
             previewAvatar = null;
 
             EditorUtility.SetDirty(avatar);
@@ -743,6 +728,7 @@ namespace VRChatImmersiveScaler.Editor
 
             originalTransformStates.Clear();
             isPreviewActive = false;
+            debugPanel.InvalidateCurrent();
 
             EditorUtility.SetDirty(previewAvatar);
             EditorUtility.SetDirty(previewAvatar.gameObject);
@@ -862,7 +848,7 @@ namespace VRChatImmersiveScaler.Editor
                     var avatar = component.GetComponentInParent<VRCAvatarDescriptor>();
                     if (avatar != null)
                     {
-                        Vector3 worldViewPos = avatar.transform.TransformPoint(avatar.ViewPosition);
+                        Vector3 worldViewPos = ImmersiveScalerViewpoint.GetWorldPosition(avatar);
                         Gizmos.color = Color.green;
                         Gizmos.DrawWireSphere(worldViewPos, 0.05f);
                     }

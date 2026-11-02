@@ -341,7 +341,15 @@
     "btn_upper_body": "上半身",
     "btn_upper_body_height": "上半身の高さ",
     "btn_torso_length": "胴体の長さ",
-    "legacy_method_desc": "レガシー (脚→目/床→目):"
+    "debug_report_title": "デバッグ",
+    "debug_report_help": "サポートを依頼する際に、このレポートをコピーしてください。現在の状態は読み取り専用です。プレビューとビルドのレポートには、実行時の値が記録されます。ビルドのレポートは、このエディターで最後に実行された Scaler の処理を示し、アバター名と日時を含みます。",
+    "debug_report_current": "現在の状態",
+    "debug_report_preview": "直前のプレビュー",
+    "debug_report_build": "最新のビルド（このエディター）",
+    "debug_report_refresh": "測定値を更新",
+    "debug_report_copy": "デバッグレポートをコピー",
+    "debug_report_no_preview": "スケーリングをプレビューすると計算内容が記録されます。プレビューをキャンセルしてもレポートは保持されます。",
+    "debug_report_no_build": "このエディターセッションでは、ビルドレポートはまだ記録されていません。"
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",

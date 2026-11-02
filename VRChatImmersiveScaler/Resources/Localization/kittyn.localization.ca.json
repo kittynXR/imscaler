@@ -341,7 +341,16 @@
     "btn_upper_body": "Cos superior",
     "btn_upper_body_height": "Alçada cos superior",
     "btn_torso_length": "Longitud del tors",
-    "target_height_tooltip": "Alçada desitjada de l'avatar en metres"
+    "target_height_tooltip": "Alçada desitjada de l'avatar en metres",
+    "debug_report_title": "Depuració",
+    "debug_report_help": "Copia aquest informe quan demanis ajuda. L’estat actual és de només lectura. Els informes de previsualització i compilació mostren els valors utilitzats en aquell moment; la compilació correspon a l’última passada de Scaler en aquest editor, amb avatar i data.",
+    "debug_report_current": "Estat actual",
+    "debug_report_preview": "Última previsualització",
+    "debug_report_build": "Última compilació (aquest editor)",
+    "debug_report_refresh": "Actualitza les mesures",
+    "debug_report_copy": "Copia l’informe de depuració",
+    "debug_report_no_preview": "Executa la previsualització per capturar-ne els càlculs. L’informe es conserva després de cancel·lar-la.",
+    "debug_report_no_build": "Encara no s’ha capturat cap informe de compilació en aquesta sessió de l’editor."
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",

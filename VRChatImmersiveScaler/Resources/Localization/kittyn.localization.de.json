@@ -342,7 +342,15 @@
     "btn_upper_body": "Oberkörper",
     "btn_upper_body_height": "Oberkörperhöhe",
     "btn_torso_length": "Rumpflänge",
-    "legacy_method_desc": "Legacy (Bein→Auge/Boden→Auge):"
+    "debug_report_title": "Debug",
+    "debug_report_help": "Kopiere diesen Bericht für Supportanfragen. Der aktuelle Zustand wird nur gelesen. Vorschau- und Build-Berichte zeigen die damals verwendeten Werte; der Build-Bericht stammt vom letzten Scaler-Durchlauf in diesem Editor und enthält Avatarname und Zeitstempel.",
+    "debug_report_current": "Aktueller Zustand",
+    "debug_report_preview": "Letzte Vorschau",
+    "debug_report_build": "Letzter Build (dieser Editor)",
+    "debug_report_refresh": "Messungen aktualisieren",
+    "debug_report_copy": "Debug-Bericht kopieren",
+    "debug_report_no_preview": "Starte die Skalierungsvorschau, um die Berechnungen aufzuzeichnen. Der Bericht bleibt nach dem Abbrechen verfügbar.",
+    "debug_report_no_build": "In dieser Editor-Sitzung wurde noch kein Build-Bericht aufgezeichnet."
   },
   "menu_items": {
     "kittyn_tools": "⚙️🎨 kittyn.cat 🐟",

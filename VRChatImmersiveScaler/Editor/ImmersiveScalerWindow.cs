@@ -255,6 +255,8 @@ namespace VRChatImmersiveScaler
         private Vector3 originalViewPosition;
         private Dictionary<Transform, TransformState> originalTransformStates = new Dictionary<Transform, TransformState>();
         private VRCAvatarDescriptor previewDescriptor;
+        private readonly ImmersiveScalerDebugPanel debugPanel = new ImmersiveScalerDebugPanel();
+        private Vector2 windowScroll;
 
         // Helper class to store transform state
         private class TransformState
@@ -305,6 +307,13 @@ namespace VRChatImmersiveScaler
         }
 
         private void OnGUI()
+        {
+            windowScroll = EditorGUILayout.BeginScrollView(windowScroll);
+            try { DrawWindowContents(); }
+            finally { EditorGUILayout.EndScrollView(); }
+        }
+
+        private void DrawWindowContents()
         {
             EditorGUILayout.Space(10);
 
@@ -399,6 +408,11 @@ namespace VRChatImmersiveScaler
 
             // Additional Tools - custom implementation for window
             DrawAdditionalTools();
+            ConfigureMeasurementParameters();
+            if (GUI.changed) debugPanel.InvalidateCurrent();
+            debugPanel.Draw(() => ImmersiveScalerDiagnostics.Snapshot(avatar, scalerCore, parameters,
+                isPreviewActive ? "Tools window: preview is active" : "Tools window: edit mode",
+                "Additional tools in the Tools window are separate manual actions."));
             }
         }
 
@@ -690,6 +704,7 @@ namespace VRChatImmersiveScaler
 
         private void ValidateAvatar()
         {
+            debugPanel.ClearAvatar();
             // Cancel any active preview when changing avatars
             if (isPreviewActive)
             {
@@ -782,16 +797,15 @@ namespace VRChatImmersiveScaler
             originalViewPosition = descriptor.ViewPosition;
             originalTransformStates.Clear();
 
-            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>();
+            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>(true);
             foreach (var t in allTransforms)
             {
                 originalTransformStates[t] = new TransformState(t);
             }
 
-            // Apply scaling
-            RescaleAvatar();
-
             isPreviewActive = true;
+            try { RescaleAvatar(); }
+            catch { CancelPreview(); throw; }
             Repaint();
         }
 
@@ -799,6 +813,7 @@ namespace VRChatImmersiveScaler
         {
             // Simply exit preview mode - changes are already applied
             isPreviewActive = false;
+            debugPanel.InvalidateCurrent();
             originalTransformStates.Clear();
             previewDescriptor = null;
             Repaint();
@@ -808,14 +823,8 @@ namespace VRChatImmersiveScaler
         {
             if (!isPreviewActive) return;
 
-            // Try to get descriptor from selected avatar first
-            var descriptor = selectedAvatar != null ? selectedAvatar.GetComponent<VRCAvatarDescriptor>() : null;
-
-            // Fall back to stored descriptor if needed
-            if (descriptor == null && previewDescriptor != null)
-            {
-                descriptor = previewDescriptor;
-            }
+            // Selection may already refer to a different avatar. Restore only the preview owner.
+            var descriptor = previewDescriptor;
 
             if (descriptor != null)
             {
@@ -834,12 +843,13 @@ namespace VRChatImmersiveScaler
             }
 
             isPreviewActive = false;
+            debugPanel.InvalidateCurrent();
             originalTransformStates.Clear();
             previewDescriptor = null;
 
-            if (selectedAvatar != null)
+            if (descriptor != null)
             {
-                EditorUtility.SetDirty(selectedAvatar);
+                EditorUtility.SetDirty(descriptor.gameObject);
             }
 
             Repaint();
@@ -864,36 +874,37 @@ namespace VRChatImmersiveScaler
             Undo.RecordObject(descriptor, "Rescale Avatar");
 
             // Record all child transforms for undo
-            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>();
+            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>(true);
             foreach (var t in allTransforms)
             {
                 Undo.RecordObject(t, "Rescale Avatar");
             }
 
-            // Measure original eye position before scaling
-            Vector3 originalEyeLocalPos = scalerCore.GetEyePositionLocal();
-
-            // Pass measurement configuration to parameters
-            parameters.targetHeightMethod = targetHeightMethod;
-            parameters.armToHeightRatioMethod = armToHeightRatioMethod;
-            parameters.armToHeightHeightMethod = armToHeightHeightMethod;
-            parameters.upperBodyUseNeck = upperBodyUseNeck;
-            parameters.upperBodyTorsoUseNeck = upperBodyTorsoUseNeck;
-            parameters.upperBodyUseLegacy = upperBodyUseLegacy;
-
-            scalerCore.ScaleAvatar(parameters);
-
-            Vector3 newEyeLocalPos = scalerCore.GetEyePositionLocal();
-            if (!parameters.skipAdjust || !parameters.skipScale)
+            ConfigureMeasurementParameters();
+            using (var report = new ImmersiveScalerDiagnostics(descriptor, scalerCore, parameters, "Tools window preview"))
             {
-                // Preserve intentional ViewPosition offset from eye bones in preview/destructive mode.
-                descriptor.ViewPosition = newEyeLocalPos + (originalViewPosition - originalEyeLocalPos);
+                Vector3 eyeOffset = ImmersiveScalerViewpoint.CaptureEyeOffset(descriptor, scalerCore);
+                report.Record("Original eye offset (avatar-local): " + eyeOffset.ToString("F6"));
+                scalerCore.ScaleAvatar(parameters);
+                ImmersiveScalerViewpoint.Reconcile(descriptor, scalerCore, eyeOffset);
+                report.Record("Viewpoint reconciled after scaling.");
+                debugPanel.SetPreview(report.Complete());
             }
 
             EditorUtility.SetDirty(selectedAvatar);
             EditorUtility.SetDirty(descriptor);
         }
 
+
+        private void ConfigureMeasurementParameters()
+        {
+            parameters.targetHeightMethod = targetHeightMethod;
+            parameters.armToHeightRatioMethod = armToHeightRatioMethod;
+            parameters.armToHeightHeightMethod = armToHeightHeightMethod;
+            parameters.upperBodyUseNeck = upperBodyUseNeck;
+            parameters.upperBodyTorsoUseNeck = upperBodyTorsoUseNeck;
+            parameters.upperBodyUseLegacy = upperBodyUseLegacy;
+        }
 
         // Original methods updated
         private void SpreadFingers()
@@ -902,7 +913,7 @@ namespace VRChatImmersiveScaler
 
             Undo.RecordObject(selectedAvatar.transform, "Spread Fingers");
 
-            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>();
+            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>(true);
             foreach (var t in allTransforms)
             {
                 Undo.RecordObject(t, "Spread Fingers");
@@ -933,6 +944,9 @@ namespace VRChatImmersiveScaler
             }
 
             Undo.RecordObject(hips, "Shrink Hip Bone");
+            var descriptor = selectedAvatar.GetComponent<VRCAvatarDescriptor>();
+            Vector3 eyeOffset = ImmersiveScalerViewpoint.CaptureEyeOffset(descriptor, scalerCore);
+            Undo.RecordObject(descriptor, "Shrink Hip Bone");
 
             float legStartY = (leftLeg.position.y + rightLeg.position.y) / 2f;
             float spineStartY = spine.position.y;
@@ -944,6 +958,9 @@ namespace VRChatImmersiveScaler
             newPosition.z = spine.position.z;
 
             hips.position = newPosition;
+            ImmersiveScalerViewpoint.Reconcile(descriptor, scalerCore, eyeOffset);
+            EditorUtility.SetDirty(descriptor);
+            debugPanel.InvalidateCurrent();
 
             EditorUtility.SetDirty(selectedAvatar);
         }
@@ -952,15 +969,21 @@ namespace VRChatImmersiveScaler
         {
             if (selectedAvatar == null) return;
 
+            var descriptor = selectedAvatar.GetComponent<VRCAvatarDescriptor>();
+            Vector3 eyeOffset = ImmersiveScalerViewpoint.CaptureEyeOffset(descriptor, scalerCore);
+            Undo.RecordObject(descriptor, "Reset Avatar Scales");
             Undo.RecordObject(selectedAvatar.transform, "Reset Avatar Scales");
 
-            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>();
+            Transform[] allTransforms = selectedAvatar.GetComponentsInChildren<Transform>(true);
             foreach (var t in allTransforms)
             {
                 Undo.RecordObject(t, "Reset Avatar Scales");
             }
 
             ImmersiveScalerUtilities.ResetAvatarScales(selectedAvatar);
+            ImmersiveScalerViewpoint.Reconcile(descriptor, scalerCore, eyeOffset);
+            EditorUtility.SetDirty(descriptor);
+            debugPanel.InvalidateCurrent();
 
             EditorUtility.SetDirty(selectedAvatar);
         }
