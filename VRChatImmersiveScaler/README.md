@@ -57,6 +57,14 @@ An NDMF-based Unity 2022 tool that provides the same powerful avatar scaling cap
 - Click "Cancel Preview" to undo preview changes
 - Actual scaling happens during avatar build
 
+### Debug Reports
+
+Expand **Debug** below the preview controls in the component inspector or at the bottom of the Tools window, then choose **Current state**, **Last preview**, or **Latest build (this Editor)** and click **Copy Debug Report**.
+
+Reports include package versions, settings, floor and height measurements, selected or rejected renderer bounds, bone fallbacks, scale factors, and eye/viewpoint positions. Current state is a read-only snapshot; click **Refresh measurements** after editing the avatar outside the scaler UI. Preview reports capture the actual calculations and remain available after cancelling the preview.
+
+The build report identifies its avatar and capture time and covers the Immersive Scaler NDMF pass. Later plugins may still change the avatar. For a misplaced viewpoint, include the preview/build reports and whether the issue appears in Unity or VRChat. Intentional offsets from the eyes are preserved.
+
 ### Parameters
 
 #### Main Settings
@@ -103,7 +111,7 @@ The tool uses the same algorithms as the original Blender addon, now with NDMF i
 1. **Measures** your avatar's current proportions
 2. **Calculates** the necessary scaling to achieve VRChat-compatible proportions
 3. **Applies** non-uniform scaling to different body parts during build
-4. **Updates** VRChat's ViewPosition from the measured final local eye position while preserving any intentional descriptor offset
+4. **Updates** VRChat's ViewPosition after scaling and additional tools, converting the final eye position and intentional local eye offset back to the SDK's root-relative world vector
 5. **Maintains** VRChat's IK system compatibility
 
 The scaling preserves VRChat's head-to-hand distance measurement while adjusting your avatar to match your real proportions. Most importantly, it automatically calculates and updates the ViewPosition based on how the scaling affects your avatar's eye height.
