@@ -110,7 +110,8 @@ namespace VRChatImmersiveScaler
                 useBoneBasedFloorCalculation = c.useBoneBasedFloorCalculation, targetHeightMethod = c.targetHeightMethod,
                 armToHeightRatioMethod = c.armToHeightRatioMethod, armToHeightHeightMethod = c.armToHeightHeightMethod,
                 upperBodyUseNeck = c.upperBodyUseNeck, upperBodyTorsoUseNeck = c.upperBodyTorsoUseNeck,
-                upperBodyUseLegacy = c.upperBodyUseLegacy
+                upperBodyUseLegacy = c.upperBodyUseLegacy,
+                fingerSpreadFactor = c.fingerSpreadFactor, spareThumb = c.spareThumb
             };
         }
 
