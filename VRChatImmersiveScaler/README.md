@@ -70,13 +70,13 @@ The build report identifies its avatar and capture time and covers the Immersive
 #### Main Settings
 - **Target Height**: Your desired avatar height in meters
 - **Upper Body %**: Percentage of height from eyes to feet that should be upper body
-- **Custom Arm Ratio**: VRChat's arm span ratio (default: 0.4537)
+- **Custom Arm Ratio**: Target ratio for the selected arm and height measurements. Lower values shorten arms relative to height. In the default mode, changing only this ratio preserves the existing body and leg proportions when their settings match the avatar.
 
 #### Customization Options
 - **Arm/Leg Thickness**: How much to preserve limb thickness during scaling
-- **Upper Leg %**: Ratio of thigh to total leg length
+- **Upper Leg %**: Thigh's share of the combined thigh and calf length
 - **Scale to Eyes**: Use eye height instead of top of head for measurements
-- **Scale Hands/Feet**: Whether to scale extremities with limbs
+- **Scale Hands/Feet**: Scale hands or feet with the corresponding limb. When disabled, their existing size is preserved during limb adjustments; changing Target Height still scales the whole avatar.
 
 #### Advanced Modes
 - **Scale by Relative Proportions**: Use arm/leg ratio instead of upper body percentage

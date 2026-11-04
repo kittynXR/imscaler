@@ -757,6 +757,7 @@ namespace VRChatImmersiveScaler
             LogVerbose($"LegLength: {legLength}, LegHeightPortion: {legHeightPortion}");
 
             float legScaleRatio, armScaleRatio;
+            float armThickness = 0.8f + (parameters.armThickness / 100f * 0.4f);
 
             if (parameters.scaleRelative)
             {
@@ -765,7 +766,7 @@ namespace VRChatImmersiveScaler
                 float rescaleLegRatio = Mathf.Pow(rescaleRatio, armToLegs);
                 float rescaleArmRatio = Mathf.Pow(rescaleRatio, 1f - armToLegs);
                 legScaleRatio = 1f - (1f - (1f / rescaleLegRatio)) / legHeightPortion;
-                armScaleRatio = CalculateArmRescaling(rescaleArmRatio);
+                armScaleRatio = CalculateArmRescaling(rescaleArmRatio, parameters.armToHeightRatioMethod, armThickness, parameters.scaleHand);
             }
             else if (parameters.keepHeadSize)
             {
@@ -781,7 +782,7 @@ namespace VRChatImmersiveScaler
                 float targetUbp = Mathf.Clamp(parameters.upperBodyPercentage / 100f, 0.01f, 0.99f);
                 float torsoScaleRatio = targetUbp / currentUbp;
                 legScaleRatio = (1f - targetUbp) / (1f - currentUbp);
-                armScaleRatio = rescaleRatio;
+                armScaleRatio = CalculateArmRescaling(rescaleRatio, parameters.armToHeightRatioMethod, armThickness, parameters.scaleHand);
 
                 LogVerbose($"Current UBP: {currentUbp}, Target UBP: {targetUbp}, TorsoScale: {torsoScaleRatio}, LegScale: {legScaleRatio}");
 
@@ -812,7 +813,7 @@ namespace VRChatImmersiveScaler
                     return;
                 }
                 float rescaleArmRatio = rescaleRatio / rescaleLegRatio;
-                armScaleRatio = CalculateArmRescaling(rescaleArmRatio);
+                armScaleRatio = CalculateArmRescaling(rescaleArmRatio, parameters.armToHeightRatioMethod, armThickness, parameters.scaleHand);
 
                 LogVerbose($"LegScaleRatio: {legScaleRatio}, RescaleLegRatio: {rescaleLegRatio}, RescaleArmRatio: {rescaleArmRatio}");
             }
@@ -839,8 +840,6 @@ namespace VRChatImmersiveScaler
 
             // Apply arm scaling
             // Simple thickness adjustment: 0% = 0.8x, 50% = 1.0x, 100% = 1.2x
-            float armThicknessNorm = parameters.armThickness / 100f;
-            float armThickness = 0.8f + (armThicknessNorm * 0.4f);
             LogVerbose($"Arm thickness calculation: {parameters.armThickness}% -> {armThickness}");
 
             ScaleArms(armScaleRatio, armThickness, parameters.scaleHand);
@@ -894,6 +893,11 @@ namespace VRChatImmersiveScaler
             float targetThighRatio = Mathf.Clamp(thighPercentage, 0.01f, 0.99f);
             float legSegmentTotal = thighPortion + calfPortion;
             float currentThighRatio = IsUsablePositive(legSegmentTotal) ? thighPortion / legSegmentTotal : 0.5f;
+            // The ankle-to-floor part stays the same size when Scale Feet is off.
+            // Allocate the remaining requested leg height to thigh and calf only.
+            float segmentScaleRatio = IsUsablePositive(legSegmentTotal)
+                ? SafeClampScale((legScaleRatio - footPortion * (scaleFoot ? legScaleRatio : 1f)) / legSegmentTotal)
+                : legScaleRatio;
 
             // Adjust scales to achieve target thigh percentage while maintaining overall leg scale
             float thighScale, calfScale;
@@ -901,10 +905,10 @@ namespace VRChatImmersiveScaler
             if (!IsFinite(currentThighRatio) || currentThighRatio <= 0.01f || currentThighRatio >= 0.99f)
             {
                 Warn($"ImmersiveScaler: Invalid current thigh ratio ({currentThighRatio}); using uniform leg scaling");
-                thighScale = legScaleRatio;
-                calfScale = legScaleRatio;
+                thighScale = segmentScaleRatio;
+                calfScale = segmentScaleRatio;
             }
-            else if (Mathf.Abs(currentThighRatio - targetThighRatio) > 0.01f) // Only adjust if there's a significant difference
+            else if (Mathf.Abs(currentThighRatio - targetThighRatio) > 0.0001f)
             {
                 // Calculate how much to adjust each segment to achieve target ratio
                 float thighAdjustment = targetThighRatio / currentThighRatio;
@@ -914,13 +918,13 @@ namespace VRChatImmersiveScaler
                 if (!IsUsablePositive(thighAdjustment) || !IsUsablePositive(calfAdjustment))
                 {
                     Warn($"ImmersiveScaler: Invalid thigh/calf adjustment values ({thighAdjustment}, {calfAdjustment}); using uniform leg scaling");
-                    thighScale = legScaleRatio;
-                    calfScale = legScaleRatio;
+                    thighScale = segmentScaleRatio;
+                    calfScale = segmentScaleRatio;
                 }
                 else
                 {
-                    thighScale = legScaleRatio * Mathf.Sqrt(thighAdjustment);
-                    calfScale = legScaleRatio * Mathf.Sqrt(calfAdjustment);
+                    thighScale = segmentScaleRatio * thighAdjustment;
+                    calfScale = segmentScaleRatio * calfAdjustment;
                 }
 
                 LogVerbose($"Thigh percentage adjustment - Current: {currentThighRatio:F3}, Target: {targetThighRatio:F3}");
@@ -929,8 +933,8 @@ namespace VRChatImmersiveScaler
             else
             {
                 // No adjustment needed, use uniform scaling
-                thighScale = legScaleRatio;
-                calfScale = legScaleRatio;
+                thighScale = segmentScaleRatio;
+                calfScale = segmentScaleRatio;
             }
 
             // Clamp values to prevent extreme scaling
@@ -947,32 +951,32 @@ namespace VRChatImmersiveScaler
             // Scale upper legs
             if (leftUpperLeg != null)
             {
-                Vector3 boneDirection = GetBoneDirection(leftUpperLeg);
+                Vector3 boneDirection = GetBoneDirection(leftUpperLeg, leftLowerLeg);
                 Vector3 newScale = GetDirectionalScale(boneDirection, thighScale, thickness);
                 LogVerbose($"Left upper leg - Direction: {boneDirection}, New scale: {newScale}");
                 LogVerbose($"   Length axis scale: {(boneDirection.y != 0 ? newScale.y : (boneDirection.x != 0 ? newScale.x : newScale.z))}, Thickness axes: X={newScale.x}, Z={newScale.z}");
-                leftUpperLeg.localScale = newScale;
+                ScaleBoneWithChildCompensation(leftUpperLeg, newScale);
             }
             if (rightUpperLeg != null)
             {
-                Vector3 boneDirection = GetBoneDirection(rightUpperLeg);
+                Vector3 boneDirection = GetBoneDirection(rightUpperLeg, rightLowerLeg);
                 Vector3 newScale = GetDirectionalScale(boneDirection, thighScale, thickness);
-                rightUpperLeg.localScale = newScale;
+                ScaleBoneWithChildCompensation(rightUpperLeg, newScale);
             }
 
             // Scale lower legs
             if (leftLowerLeg != null)
             {
-                Vector3 boneDirection = GetBoneDirection(leftLowerLeg);
+                Vector3 boneDirection = GetBoneDirection(leftLowerLeg, leftFoot);
                 Vector3 newScale = GetDirectionalScale(boneDirection, calfScale, thickness);
                 LogVerbose($"Left lower leg - Direction: {boneDirection}, New scale: {newScale}");
-                leftLowerLeg.localScale = newScale;
+                ScaleBoneWithChildCompensation(leftLowerLeg, newScale);
             }
             if (rightLowerLeg != null)
             {
-                Vector3 boneDirection = GetBoneDirection(rightLowerLeg);
+                Vector3 boneDirection = GetBoneDirection(rightLowerLeg, rightFoot);
                 Vector3 newScale = GetDirectionalScale(boneDirection, calfScale, thickness);
-                rightLowerLeg.localScale = newScale;
+                ScaleBoneWithChildCompensation(rightLowerLeg, newScale);
             }
 
             // Scale feet if requested
@@ -980,19 +984,19 @@ namespace VRChatImmersiveScaler
             {
                 float footScale = Mathf.Clamp(legScaleRatio, 0.1f, 10f);
                 if (leftFoot != null)
-                    leftFoot.localScale = Vector3.one * footScale;
+                    leftFoot.localScale *= footScale;
                 if (rightFoot != null)
-                    rightFoot.localScale = Vector3.one * footScale;
+                    rightFoot.localScale *= footScale;
             }
         }
 
-        private Vector3 GetBoneDirection(Transform bone)
+        private Vector3 GetBoneDirection(Transform bone, Transform nextBone = null)
         {
             // Determine which direction the bone extends in local space
-            // This is typically towards the first child
-            if (bone.childCount > 0)
+            // Prefer the mapped joint: the first child may be a zero-length helper.
+            if (nextBone != null || bone.childCount > 0)
             {
-                Transform child = bone.GetChild(0);
+                Transform child = nextBone != null ? nextBone : bone.GetChild(0);
                 Vector3 localChildPos = bone.InverseTransformPoint(child.position);
 
                 // Find the dominant axis
@@ -1039,6 +1043,35 @@ namespace VRChatImmersiveScaler
             return scale;
         }
 
+        private static Vector3 BasisLengths(Transform transform)
+        {
+            return new Vector3(transform.TransformVector(Vector3.right).magnitude,
+                transform.TransformVector(Vector3.up).magnitude,
+                transform.TransformVector(Vector3.forward).magnitude);
+        }
+
+        // Each joint owns one segment's length/thickness. Its children move with the
+        // segment, but must not inherit the same deformation a second time. Preserve
+        // authored scales and compensate in each child's axes (feet often rotate 90 degrees).
+        private void ScaleBoneWithChildCompensation(Transform bone, Vector3 multiplier)
+        {
+            if (multiplier == Vector3.one) return;
+            var children = new List<KeyValuePair<Transform, Vector3>>();
+            foreach (Transform child in bone)
+                children.Add(new KeyValuePair<Transform, Vector3>(child, BasisLengths(child)));
+            var originalScale = bone.localScale;
+            bone.localScale = Vector3.Scale(originalScale, multiplier);
+            foreach (var entry in children)
+            {
+                var after = BasisLengths(entry.Key);
+                Vector3 correction = Vector3.one;
+                for (int axis = 0; axis < 3; axis++)
+                    if (IsUsablePositive(after[axis])) correction[axis] = entry.Value[axis] / after[axis];
+                entry.Key.localScale = Vector3.Scale(entry.Key.localScale, correction);
+            }
+            DiagnosticLog?.Invoke($"Bone scale {bone.name}: original={originalScale}, multiplier={multiplier}, result={bone.localScale}; compensated children={children.Count}");
+        }
+
         private float[] GetLegProportions(bool useBoneBasedFloorCalculation)
         {
             Transform leftUpperLeg = GetBone(HumanBodyBones.LeftUpperLeg);
@@ -1082,48 +1115,38 @@ namespace VRChatImmersiveScaler
             // Scale upper arms
             if (leftUpperArm != null)
             {
-                Vector3 boneDirection = GetBoneDirection(leftUpperArm);
+                Vector3 boneDirection = GetBoneDirection(leftUpperArm, leftLowerArm);
                 Vector3 newScale = GetDirectionalScale(boneDirection, armScaleRatio, thickness);
                 LogVerbose($"Left upper arm - Direction: {boneDirection}, New scale: {newScale}");
-                leftUpperArm.localScale = newScale;
+                ScaleBoneWithChildCompensation(leftUpperArm, newScale);
             }
             if (rightUpperArm != null)
             {
-                Vector3 boneDirection = GetBoneDirection(rightUpperArm);
+                Vector3 boneDirection = GetBoneDirection(rightUpperArm, rightLowerArm);
                 Vector3 newScale = GetDirectionalScale(boneDirection, armScaleRatio, thickness);
-                rightUpperArm.localScale = newScale;
+                ScaleBoneWithChildCompensation(rightUpperArm, newScale);
             }
 
             // Scale lower arms
             if (leftLowerArm != null)
             {
-                Vector3 boneDirection = GetBoneDirection(leftLowerArm);
+                Vector3 boneDirection = GetBoneDirection(leftLowerArm, leftHand);
                 Vector3 newScale = GetDirectionalScale(boneDirection, armScaleRatio, thickness);
                 LogVerbose($"Left lower arm - Direction: {boneDirection}, New scale: {newScale}");
-                leftLowerArm.localScale = newScale;
+                ScaleBoneWithChildCompensation(leftLowerArm, newScale);
             }
             if (rightLowerArm != null)
             {
-                Vector3 boneDirection = GetBoneDirection(rightLowerArm);
+                Vector3 boneDirection = GetBoneDirection(rightLowerArm, rightHand);
                 Vector3 newScale = GetDirectionalScale(boneDirection, armScaleRatio, thickness);
-                rightLowerArm.localScale = newScale;
+                ScaleBoneWithChildCompensation(rightLowerArm, newScale);
             }
 
-            if (!scaleHand)
+            if (scaleHand)
             {
-                // Counter-scale hands to keep them original size
-                if (leftHand != null)
-                {
-                    Vector3 boneDirection = GetBoneDirection(leftHand.parent); // Use parent's direction
-                    Vector3 counterScale = GetDirectionalScale(boneDirection, 1f / armScaleRatio, 1f / thickness);
-                    leftHand.localScale = counterScale;
-                }
-                if (rightHand != null)
-                {
-                    Vector3 boneDirection = GetBoneDirection(rightHand.parent); // Use parent's direction
-                    Vector3 counterScale = GetDirectionalScale(boneDirection, 1f / armScaleRatio, 1f / thickness);
-                    rightHand.localScale = counterScale;
-                }
+                // Child compensation already preserves hands when this option is off.
+                if (leftHand != null) leftHand.localScale *= armScaleRatio;
+                if (rightHand != null) rightHand.localScale *= armScaleRatio;
             }
         }
 
@@ -1136,42 +1159,60 @@ namespace VRChatImmersiveScaler
             }
         }
 
-        private float CalculateArmRescaling(float headArmChange)
+        private float CalculateArmRescaling(float measurementChange, ArmMethodType method, float thickness, bool scaleHand)
         {
-            Transform rightUpperArm = GetBone(HumanBodyBones.RightUpperArm);
-            Transform head = GetBone(HumanBodyBones.Head);
+            float current = GetArmByMethod(method);
+            if (!IsUsablePositive(current) || !IsUsablePositive(measurementChange)) return 1f;
+            if (Mathf.Approximately(measurementChange, 1f) && Mathf.Approximately(thickness, 1f)) return 1f;
 
-            if (rightUpperArm == null || head == null)
-                return 1f;
-
-            float totalLength = HeadToHand();
-            float armLength = GetArmLength();
-            float neckLength = Mathf.Abs(head.position.y - rightUpperArm.position.y);
-
-            if (!IsUsablePositive(totalLength) || !IsUsablePositive(armLength) || !IsUsablePositive(headArmChange))
+            // Solve using the selected measurement and the same bone operation that
+            // will be applied. The old formula combined head-to-elbow with full arm
+            // length even when the selected method measured to the wrist or fingers.
+            // Only these local scales are touched; restore them after every sample.
+            var saved = new Dictionary<Transform, Vector3>();
+            foreach (var id in new[] { HumanBodyBones.LeftUpperArm, HumanBodyBones.RightUpperArm,
+                HumanBodyBones.LeftLowerArm, HumanBodyBones.RightLowerArm, HumanBodyBones.LeftHand, HumanBodyBones.RightHand })
             {
-                return 1f;
+                var bone = GetBone(id);
+                if (bone == null) continue;
+                saved[bone] = bone.localScale;
+                foreach (Transform child in bone) saved[child] = child.localScale;
             }
-
-            float shoulderRadicand = (totalLength - neckLength) * (totalLength + neckLength);
-            if (shoulderRadicand < 0f)
+            var sink = DiagnosticLog;
+            float target = current * measurementChange;
+            float low = 0.1f, high = 10f;
+            float result = 1f;
+            float Measure(float scale)
             {
-                Warn("ImmersiveScaler: Invalid shoulder/neck measurement while calculating arm scaling; leaving arm scale unchanged");
-                return 1f;
+                foreach (var entry in saved) entry.Key.localScale = entry.Value;
+                ScaleArms(scale, thickness, scaleHand);
+                return GetArmByMethod(method);
             }
-
-            float shoulderLength = Mathf.Sqrt(shoulderRadicand) - armLength;
-            float adjustedTotalLength = headArmChange * totalLength;
-            float armRadicand = (adjustedTotalLength - neckLength) * (adjustedTotalLength + neckLength);
-            if (armRadicand < 0f)
+            try
             {
-                Warn("ImmersiveScaler: Requested arm scaling is geometrically invalid; leaving arm scale unchanged");
-                return 1f;
+                DiagnosticLog = null;
+                float minimum = Measure(low), maximum = Measure(high);
+                if (!IsUsablePositive(minimum) || !IsUsablePositive(maximum) || maximum <= minimum) return 1f;
+                if (target <= minimum) result = low;
+                else if (target >= maximum) result = high;
+                else
+                {
+                    for (int i = 0; i < 24; i++)
+                    {
+                        float middle = (low + high) * 0.5f;
+                        if (Measure(middle) < target) low = middle;
+                        else high = middle;
+                    }
+                    result = (low + high) * 0.5f;
+                }
             }
-
-            float armChange = (Mathf.Sqrt(armRadicand) / armLength) - (shoulderLength / armLength);
-
-            return armChange;
+            finally
+            {
+                foreach (var entry in saved) entry.Key.localScale = entry.Value;
+                DiagnosticLog = sink;
+            }
+            DiagnosticLog?.Invoke($"Arm scale solve: method={method}, original={current}, target={target}, segment factor={result}");
+            return result;
         }
 
         public float GetArmLength()
