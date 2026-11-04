@@ -45,7 +45,7 @@ namespace VRChatImmersiveScaler
         [Range(30f, 75f)]
         public float upperBodyPercentage = 44f;
         
-        [Tooltip("VRChat's arm ratio - controls IK arm length (default: 0.4537, lower = longer arms)")]
+        [Tooltip("Target arm-to-height ratio using the selected measurements. Lower values mean shorter arms relative to height.")]
         public float customScaleRatio = 0.4537f;
         
         [Header("Body Proportions")]

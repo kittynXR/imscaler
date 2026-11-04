@@ -232,7 +232,7 @@ namespace VRChatImmersiveScaler.Tests
             target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
         }
 
-        private VRCAvatarDescriptor CreateAvatar(string name)
+        internal VRCAvatarDescriptor CreateAvatar(string name)
         {
             var root = new GameObject(name);
             cleanup.Add(root);
