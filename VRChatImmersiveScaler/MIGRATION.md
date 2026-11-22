@@ -2,7 +2,7 @@
 
 ## What's Changed
 
-Immersive Scaler is maintained as an NDMF component for Unity 2022.3.22f1. The legacy window remains available for manual/destructive testing, but the component workflow is the supported path for VRChat avatar builds.
+Immersive Scaler is maintained as an NDMF component for Unity 2022 and Unity 6. The legacy window remains available for manual/destructive testing, but the component workflow is the supported path for VRChat avatar builds.
 
 ## Key Improvements
 
@@ -14,8 +14,8 @@ Immersive Scaler is maintained as an NDMF component for Unity 2022.3.22f1. The l
 
 ## Supported Stack
 
-- Unity 2022.3.22f1
-- VRChat SDK Avatars >=3.10.3 <3.11.0-a
+- Unity 2022.3.22f1 or Unity 6000.0.67f1
+- VRChat SDK Avatars 3.10.x (3.10.3 or later) for Unity 2022, or 3.11.x (starting with 3.11.0-beta.1) for Unity 6
 - NDMF >=1.13.0 <2.0.0-a
 
 ## How to Use the Component

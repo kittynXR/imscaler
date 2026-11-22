@@ -28,12 +28,12 @@ VRChat Immersive Scaler is a Unity Editor tool that scales VRChat avatars to mat
 - This is a Unity package, not a standalone application
 - No traditional build/test commands - functionality is tested within Unity Editor
 - Assembly definitions (`.asmdef` files) separate Editor and Runtime code
-- Targets Unity 2022.3.22f1 exclusively for the maintained package
+- Targets Unity 2022.3.22f1 or Unity 6000.0.67f1
 
 ### Dependencies
 
 - `nadena.dev.ndmf`: >=1.13.0 <2.0.0-a - Required for build-time processing
-- `com.vrchat.avatars`: >=3.10.3 <3.11.0-a - VRChat SDK for avatar descriptors
+- `com.vrchat.avatars`: >=3.10.3 <3.11.0-a || >=3.11.0-beta.1 <3.12.0-a - VRChat SDK for avatar descriptors
 - Modular Avatar is optional; the NDMF pass declares ordering after `nadena.dev.modular-avatar` without requiring its runtime assembly.
 
 ### Code Organization

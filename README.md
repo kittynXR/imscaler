@@ -1,6 +1,6 @@
 # VRChat Immersive Scaler
 
-A Unity 2022 tool for scaling VRChat avatars to match real-world proportions while maintaining VR immersion. It uses NDMF for non-destructive build-time avatar modifications.
+A Unity editor tool for scaling VRChat avatars to match real-world proportions while maintaining VR immersion. It uses NDMF for non-destructive build-time avatar modifications.
 
 If you just want to scale your arms and legs, there's an easier way to do it in-game with Limb Scaler by nanochip:  https://x.com/xNanochip/status/1989030705850949650
 
@@ -9,8 +9,8 @@ Immersive Scaler also includes renderer-based measurement overrides and mesh out
 > **Note**: The exact IK measurement parameters VRChat uses internally are not fully documented. The current defaults are based on community research and testing. We'll update with firm defaults and bump the version once the exact parameters are confirmed.
 
 [![VCC Compatible](https://img.shields.io/badge/VCC-Compatible-green)](https://vcc.docs.vrchat.com)
-[![Unity 2022.3.22f1](https://img.shields.io/badge/Unity-2022.3.22f1-blue)](https://creators.vrchat.com/sdk/upgrade/current-unity-version/)
-[![VRC SDK Avatars 3.10.3](https://img.shields.io/badge/VRC%20SDK%20Avatars-3.10.3-blueviolet)](https://vcc.docs.vrchat.com/)
+[![Unity 2022.3 and Unity 6](https://img.shields.io/badge/Unity-2022.3%20%7C%206-blue)](https://creators.vrchat.com/sdk/upgrade/current-unity-version/)
+[![VRC SDK Avatars 3.10 and 3.11](https://img.shields.io/badge/VRC%20SDK%20Avatars-3.10%20%7C%203.11-blueviolet)](https://vcc.docs.vrchat.com/)
 [![NDMF 1.13.0](https://img.shields.io/badge/NDMF-1.13.0-purple)](https://github.com/bdunderscore/ndmf)
 
 ## 🚀 Quick Install
@@ -56,8 +56,8 @@ https://immersive-scaler.kittyn.cat/index.json
 
 ## 📋 Requirements
 
-- Unity 2022.3.22f1, matching the current VRChat target for this package
-- VRChat SDK3 Avatars 3.10.3 or newer within the 3.10.x line
+- Unity 2022.3.22f1 or Unity 6000.0.67f1
+- VRChat SDK Avatars 3.10.x (3.10.3 or later) for Unity 2022, or 3.11.x (starting with 3.11.0-beta.1) for Unity 6
 - [NDMF (Non-Destructive Modular Framework)](https://github.com/bdunderscore/ndmf) 1.13.0 or newer within the 1.x line
 - Avatar with Humanoid rig configuration
 

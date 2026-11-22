@@ -1,6 +1,6 @@
 # VRChat Immersive Scaler for Unity
 
-An NDMF-based Unity 2022 tool that provides the same powerful avatar scaling capabilities as the Blender Immersive Scaler addon, directly within Unity. This package targets Unity 2022.3.22f1 with VRChat SDK Avatars 3.10.3 and NDMF 1.13.0.
+An NDMF-based Unity editor tool that provides the same powerful avatar scaling capabilities as the Blender Immersive Scaler addon, directly within Unity.
 
 ## Features
 
@@ -36,9 +36,9 @@ An NDMF-based Unity 2022 tool that provides the same powerful avatar scaling cap
 
 ## Requirements
 
-- Unity 2022.3.22f1
+- Unity 2022.3.22f1 or Unity 6000.0.67f1
 - Avatar must have a Humanoid rig configuration
-- VRChat SDK3 Avatars 3.10.3, constrained to the 3.10.x line
+- VRChat SDK Avatars 3.10.x (3.10.3 or later) for Unity 2022, or 3.11.x (starting with 3.11.0-beta.1) for Unity 6
 - NDMF 1.13.0 or newer, constrained to the 1.x line
 - Modular Avatar is optional. When installed, the NDMF pass runs after it so merged armatures are already prepared.
 
