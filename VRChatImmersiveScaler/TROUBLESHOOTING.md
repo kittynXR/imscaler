@@ -113,5 +113,5 @@ When reporting issues, please include:
 If you continue to have issues:
 1. Save your Unity project
 2. Take screenshots of the tool settings and console output
-3. Note your Unity version and VRChat SDK version. This package is maintained for Unity 2022.3.22f1, VRChat SDK Avatars 3.10.3, and NDMF 1.13.0.
+3. Note your Unity version and VRChat SDK version. Use SDK 3.10.x with Unity 2022 or SDK 3.11.x with Unity 6. If installing would downgrade the SDK, refresh your VPM listings and select Immersive Scaler 1.6.2 or later.
 4. Create an issue on GitHub with all this information
